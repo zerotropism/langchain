@@ -14,6 +14,8 @@ Custom local rag setup with langchain capabilities on:
 * Templating
 * Memory
 * Chaining
+* Evaluating
+* Agents
 
 ## Content
 
