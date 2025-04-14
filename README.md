@@ -21,3 +21,4 @@ Custom local rag setup with langchain capabilities on:
 
 * `amazon.csv` & `clothing.csv` datasets
 * `notebook.ipynb` building the complete progression
+* `notebooks` folder decomposing the progression by chapter/task
