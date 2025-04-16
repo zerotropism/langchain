@@ -1,0 +1,78 @@
+# Default values
+defaults:
+  model: "gemma3:12b"
+  temperature: 0.0
+  prompt: "What is 1+1?"
+  template: >
+    Translate the text
+    that is delimited by triple backticks 
+    into a style that is {style}.
+    text: ```{source}```
+  source: |
+    Arrr, I be fuming that me blender lid
+    flew off and splattered me kitchen walls
+    with smoothie! And to make matters worse,
+    the warranty don't cover the cost of
+    cleaning up me kitchen. I need yer help
+    right now, matey!
+  style: "American English in a calm and respectful tone"
+  schema_name: "product_review"
+  schema_template: >
+    For the following text, extract the following information:
+    {format_instructions}
+    
+    text: {text}
+
+# Example definitions for reuse
+examples:
+  pirate_complaint:
+    source: |
+      Arrr, I be fuming that me blender lid
+      flew off and splattered me kitchen walls
+      with smoothie! And to make matters worse,
+      the warranty don't cover the cost of
+      cleaning up me kitchen. I need yer help
+      right now, matey!
+    style: "American English in a calm and respectful tone"
+  
+  rude_response:
+    source: |
+      Hey there customer,
+      the warranty does not cover
+      cleaning expenses for your kitchen
+      because it's your fault that
+      you misused your blender
+      by forgetting to put the lid on before
+      starting the blender.
+      Tough luck! See ya!
+    style: "a polite tone that speaks in English Pirate"
+  
+  product_review:
+    source: |
+      This leaf blower is pretty amazing. It has four settings:
+      candle blower, gentle breeze, windy city, and tornado.
+      It arrived in two days, just in time for my wife's
+      anniversary present.
+      I think my wife liked it so much she was speechless.
+      So far I've been the only one using it, and I've been
+      using it every other morning to clear the leaves on our lawn.
+      It's slightly more expensive than the other leaf blowers
+      out there, but I think it's worth it for the extra features.
+
+# Schema definitions for structured output parsing
+schemas:
+  product_review:
+    - name: "gift"
+      description: >
+        Was the item purchased as a gift for someone else?
+        Answer True if yes, False if not or unknown.
+    
+    - name: "delivery_days"
+      description: >
+        How many days did it take for the product
+        to arrive? If this information is not found, output -1.
+    
+    - name: "price_value"
+      description: >
+        Extract any sentences about the value or price,
+        and output them as a comma separated Python list.
