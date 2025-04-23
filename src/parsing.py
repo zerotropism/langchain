@@ -1,369 +1,358 @@
+"""
+LangChain LLM Integration Toolkit
+
+This module provides a comprehensive, object-oriented implementation for working with LLMs
+through LangChain. It includes structured classes for model interaction, prompt management,
+output parsing, and high-level text processing workflows.
+
+The module features a clean separation of concerns with specialized components for:
+- LLM client communication (LLMClient)
+- Prompt template management (PromptManager)
+- Structured output parsing (OutputParser)
+- Text processing operations (TextProcessor)
+"""
+
+from typing import Dict, List, Optional, Union, Any
 from langchain_ollama import ChatOllama
 from langchain.schema import HumanMessage
 from langchain.prompts import ChatPromptTemplate
-from langchain.output_parsers import ResponseSchema
-from langchain.output_parsers import StructuredOutputParser
+from langchain.output_parsers import ResponseSchema, StructuredOutputParser
 from decorators import handle_exception
-from dataclasses import dataclass
-from typing import Optional, Dict, List, Any
 
 
-@dataclass
-class ParamsConfig:
-    """Configuration parameters for the Parser class."""
+class Config:
+    """Configuration class for managing global settings."""
 
-    # Default model configuration
-    model: str = "gemma3:12b"
-    temperature: float = 0.0
+    def __init__(self, config_data: Optional[Dict] = None):
+        # Default LLM configuration
+        self.model = "gemma3:12b"
+        self.temperature = 0.0
 
-    # Default prompts
-    prompt: str = "What is 1+1?"
-    template: str = "Format the following message: {source} into the style: {style}"
-    source: str = ""
-    style: str = ""
+        # Default Prompt configuration
+        self.prompt = "What is 1+1?"
+        self.template = "Format the following message: {source} into the style: {style}"
+        self.source = ""
+        self.style = ""
 
-    # Default schemas
-    schema_name: str = ""
-    schema_template: str = (
-        "For the following text, extract information according to "
-        "these instructions:\n{format_instructions}\n\nText: {text}"
-    )
+        # Default Schema configuration
+        self.schema_name = ""
+        self.schema_template = ""
 
+        # Custom default settings if provided
+        if config_data and "defaults" in config_data:
+            defaults = config_data["defaults"]
+            self.model = defaults.get("model", self.model)
+            self.temperature = defaults.get("temperature", self.temperature)
+            self.prompt = defaults.get("prompt", self.prompt)
+            self.template = defaults.get("template", self.template)
+            self.source = defaults.get("source", self.source)
+            self.style = defaults.get("style", self.style)
+            self.schema_name = defaults.get("schema_name", self.schema_name)
+            self.schema_template = defaults.get("schema_template", self.schema_template)
 
-class Parser:
-    """A class for handling LLM prompts, completions, and output parsing.
+            # Store the complete config data for other components to access
+            self._config_data = config_data or {}
 
-    This class provides methods for interacting with language models,
-    formatting prompts, and parsing structured responses.
-    """
-
-    def __init__(
-        self,
-        config: Optional[Dict] = None,
-    ) -> None:
-        """Initializes the Parser class.
-        Args:
-            config (dict, optional) : Pre-loaded configuration dictionary
+    def get_schemas(self) -> Dict[str, List[Dict[str, str]]]:
         """
-        # Load default parameters configuration
-        self._params = ParamsConfig()
-        self._model_name = self._params.model
-        self._model_temperature = self._params.temperature
-        self._template = self._params.template
-        self._schemas = {}
-        self._examples = {}
+        Retrieve schema definitions from the configuration.
 
-        # Try and load configuration from the provided dictionary
-        if config:
-            self.load_params_from_config(config)
-        else:
-            print("Default configuration loaded")
-
-    @property
-    def params(self) -> ParamsConfig:
-        """The current parameters configuration."""
-        return self._params
-
-    def update_params(self, **kwargs) -> None:
-        """Update parameter values in the configuration.
-        Args:
-            **kwargs: Key-value pairs of parameters to update
-        Example:
-            parser.update_params(prompt_one_shot="new_prompt")
-        """
-        for key, value in kwargs.items():
-            if hasattr(self._params, key) and value:
-                setattr(self._params, key, value)
-
-                # If updating the default template, also update the template object
-                if key == "template" and value:
-                    self._template = value
-
-    @property
-    def model_name(self) -> str:
-        """The model name being used."""
-        return self._model_name
-
-    @model_name.setter
-    def model_name(self, model: str) -> None:
-        """Sets the model name to use."""
-        self._model_name = model
-
-    @property
-    def model_temperature(self) -> float:
-        """The current temperature setting for the model."""
-        return self._model_temperature
-
-    @model_temperature.setter
-    def model_temperature(self, temperature: float) -> None:
-        """Sets the temperature setting for the model to apply."""
-        self._model_temperature = temperature
-
-    @property
-    def template(self) -> ChatPromptTemplate:
-        """Returns the current template."""
-        if not self._template:
-            template_str = (
-                self._params.template
-                or "Format the following message: {source} into the style: {style}"
-            )
-            self._template = ChatPromptTemplate.from_template(template_str)
-        return self._template
-
-    @template.setter
-    def template(self, template_str: str) -> None:
-        """Set a new prompt template."""
-        if template_str:
-            self._template = ChatPromptTemplate.from_template(template_str)
-
-    @property
-    def examples(self) -> Dict[str, Dict[str, str]]:
-        """Examples for prompting."""
-        return self._examples
-
-    @property
-    def schemas(self) -> Dict[str, List[Dict[str, str]]]:
-        """Schema definitions for structured parsing."""
-        return self._schemas
-
-    def _get_llm(
-        self, model: Optional[str] = None, temperature: Optional[float] = None
-    ) -> ChatOllama:
-        """Get a configured LLM instance.
-        Args:
-            model (str, optional): Override the default model name
-            temperature (float, optional): Override the default temperature
         Returns:
-            Configured ChatOllama instance
+            dict: A dictionary where keys are schema names and values are lists of schema definitions
         """
-        return ChatOllama(
-            model=model or self._model_name,
-            temperature=temperature or self._model_temperature,
+        return self._config_data.get("schemas", {})
+
+
+class LLMClient:
+    """Base client for interacting with language models."""
+
+    def __init__(self, config: Optional[Union[Config | Dict]] = None):
+        """
+        Initialize the LLM client.
+
+        Args:
+            config (Config or dict, optional): Configuration object or dictionary
+        """
+        self.params = Config(config) if isinstance(config, dict) else config or Config()
+        self.model = self.params.model
+        self.temperature = self.params.temperature
+        self._chat_model = None
+
+    @property
+    def chat_model(self):
+        """Lazy-loaded chat model instance."""
+        self._chat_model = self._chat_model or ChatOllama(
+            model=self.model, temperature=self.temperature
         )
+        return self._chat_model
 
     @handle_exception
-    def load_params_from_config(self, config: dict = None) -> None:
-        """Load configuration from a pre-loaded config dictionary.
-        Args:
-            config (dict): Pre-loaded and pre-processed configuration
+    def get_completion(self, prompt: Optional[str] = None) -> str:
         """
-        # Update params from defaults section
-        if "defaults" in config:
-            params_update = {
-                "model": config["defaults"].get("model"),
-                "temperature": config["defaults"].get("temperature"),
-                "prompt": config["defaults"].get("prompt"),
-                "template": config["defaults"].get("template"),
-                "source": config["defaults"].get("source"),
-                "style": config["defaults"].get("style"),
-                "schema_name": config["defaults"].get("schema_name"),
-                "schema_template": config["defaults"].get("schema_template"),
-            }
-            # Filter out None values before updating
-            params_update = {k: v for k, v in params_update.items() if v is not None}
-            self.update_params(**params_update)
+        Get completion from a simple prompt.
 
-        # Load examples if present
-        if "examples" in config:
-            self._examples = config["examples"]
-
-        # Load schemas if present
-        if "schemas" in config:
-            self._schemas = config["schemas"]
-
-        # Set template if default template was loaded
-        if self._params.template:
-            self._template = self._params.template
-
-    @handle_exception
-    def get_completion(
-        self,
-        prompt: Optional[str] = None,
-        model: Optional[str] = None,
-        temperature: Optional[float] = None,
-    ) -> str:
-        """Get a simple completion from the LLM based on the provided prompt.
         Args:
-            prompt (str, optional): The prompt text (falls back to `prompt` from params)
-            model (str, optional): Override the default model
-            temperature (float, optional): Override the default temperature
+            prompt (str, optional): The text prompt to send to the model, falls back to simplistic default prompt
+
         Returns:
-            str: The completion response from the LLM.
+            str: The model's response as a string
         """
-        # Create a ChatOllama instance with the model and temperature
-        llm = self._get_llm(
-            model=model or self._model_name,
-            temperature=temperature or self._model_temperature,
-        )
-
-        # Create a list of messages the simplest way ChatOllama class expects
-        messages = [HumanMessage(content=prompt if prompt else self._params.prompt)]
-
-        # Get the response from the LLM
-        return llm(messages).content
+        messages = [HumanMessage(content=prompt or self.params.prompt)]
+        response = self.chat_model.invoke(messages)
+        return response.content
 
     @handle_exception
-    def format_prompt(
-        self,
-        template: Optional[str] = None,
-        source: Optional[str] = None,
-        style: Optional[str] = None,
-    ) -> str:
-        """Format a prompt with the provided template, source and style.
+    def chat(self, messages: List[HumanMessage]) -> str:
+        """
+        Send a list of messages to the chat model.
+
         Args:
-            template_prompt (str): The template to use for formatting
-            source_prompt (str): The source text to format
-            target_style (str): The target style description
-        Returns:
-            str: The formatted prompt as the source prompt formatted to the desired style according to the template.
-        """
-        # Create a ChatPromptTemplate instance with the provided template or the default one
-        template = template or self._template or self._params.template
-        return self._template.format_messages(
-            style=style or self._params.style,
-            source=source or self._params.source,
-        )
+            messages (list[HumanMessage]): List of formatted messages
 
-    @handle_exception
-    def get_formatted_completion(
-        self,
-        source: Optional[str] = None,
-        style: Optional[str] = None,
-        custom_template: Optional[str] = None,
-        model: Optional[str] = None,
-        temperature: Optional[float] = None,
-    ) -> str:
-        """Gets a formatted completion from the LLM based on the provided template, source prompt and target styles.
+        Returns:
+            str: The model's response as a string
+        """
+        response = self.chat_model.invoke(messages)
+        return response.content
+
+
+class PromptManager:
+    """Manager for creating and formatting prompt templates."""
+
+    def __init__(self, config: Optional[Union[Config | Dict]] = None):
+        """
+        Initialize the prompt manager.
+
         Args:
-            source (str, optional): The source text to format
-            style (str, optional): The target style description
-            custom_template (str, optional): Use a one-time custom template
-            model (str, optional): Override the default model
-            temperature (str, optional): Override the default temperature
-        Returns:
-            str: The formatted completion response from the LLM.
+            config (Config or dict, optional): Configuration object or dictionary
         """
-        # Create a ChatOllama instance with the model and temperature
-        llm = self._get_llm(
-            model=model or self._model_name,
-            temperature=temperature or self._model_temperature,
-        )
+        self.params = Config(config) if isinstance(config, dict) else config or Config()
+        self._templates = {}
 
-        # Save current template if using a custom one
-        original_template = None
-        if custom_template:
-            original_template = self._template
-            self._template = custom_template
+        # Preload default template if available
+        if self.params.template:
+            self._templates["default"] = self.create_template(self.params.template)
 
-        # Set prompt to passed one or format it with the template
-        try:
-            formatted_messages = self.format_prompt(source, style)
-            result = llm(formatted_messages).content
-        finally:
-            # Restore original template if we changed it
-            if original_template:
-                self._template = original_template
+    @staticmethod
+    def create_template(template_string: str) -> ChatPromptTemplate:
+        """
+        Create a chat prompt template from a string.
 
-        return result
+        Args:
+            template_string (str): The template string with variables in {curly_braces}
+
+        Returns:
+            ChatPromptTemplate: A ChatPromptTemplate object
+        """
+        return ChatPromptTemplate.from_template(template_string)
+
+    @staticmethod
+    def format_messages(template: ChatPromptTemplate, **kwargs) -> List[HumanMessage]:
+        """
+        Format a template with values.
+
+        Args:
+            template (ChatPromptTemplate): The prompt template
+            **kwargs: The values to fill into the template
+
+        Returns:
+            list: Formatted messages ready to send to the model
+        """
+        return template.format_messages(**kwargs)
 
     @handle_exception
-    def create_schema_parser(
-        self, schema_name: Optional[str] = None
+    def get_template(self, name: str = "default") -> Optional[ChatPromptTemplate]:
+        """
+        Get a pre-loaded template by name.
+
+        Args:
+            name (str): Name of the template
+
+        Returns:
+            ChatPromptTemplate (optional): The template or None if not found
+        """
+        if name not in self._templates:
+            if self._templates:
+                print(
+                    f"Template '{name}' not found. Returning the list of available templates:"
+                )
+                print(list(self._templates.keys()))
+                return None
+            print("No templates available.")
+            return None
+        return self._templates.get(name)
+
+
+class OutputParser:
+    """Parser for structured outputs from language models."""
+
+    def __init__(self, config: Optional[Union[Config | Dict]] = None):
+        """
+        Initialize the output parser.
+
+        Args:
+            config (Config or dict, optional): Configuration object or dictionary
+        """
+        self.params = Config(config) if isinstance(config, dict) else config or Config()
+        self._parsers = {}
+
+        # Preload parsers from config schemas
+        for schema_name, schema_def in self.params.get_schemas().items():
+            self._parsers[schema_name] = self.create_json_parser(schema_def)
+
+    @staticmethod
+    def create_json_parser(
+        schema_definitions: List[Dict[str, str]],
     ) -> StructuredOutputParser:
-        """Create a structured output parser with the given schema.
-        Args:
-            schema_name (str, optional): Name of the schema to use
-        Returns:
-            StructuredOutputParser: Configured parser for structured output
         """
-        # Use provided schema name or default
-        schema_name = schema_name or self._params.schema_name
+        Create a parser for JSON-formatted outputs.
 
-        if not schema_name or schema_name not in self._schemas:
-            raise ValueError(f"Schema '{schema_name}' not found in loaded schemas")
+        Args:
+            schema_definitions (list): List of dictionaries containing schema definitions
+            Each dict should have 'name' and 'description' keys
 
-        schema_fields = self._schemas[schema_name]
-        response_schemas = []
+        Returns:
+            StructuredOutputParser: A configured StructuredOutputParser
+        """
+        schemas = [
+            ResponseSchema(name=schema["name"], description=schema["description"])
+            for schema in schema_definitions
+        ]
+        return StructuredOutputParser.from_response_schemas(schemas)
 
-        for field in schema_fields:
-            response_schemas.append(
-                ResponseSchema(name=field["name"], description=field["description"])
-            )
+    @staticmethod
+    def get_format_instructions(parser: StructuredOutputParser) -> str:
+        """
+        Get formatting instructions for a given parser.
 
-        return StructuredOutputParser.from_response_schemas(response_schemas)
+        Args:
+            parser (StructuredOutputParser): The parser to get instructions for
+
+        Returns:
+            str: Formatting instructions as a string
+        """
+        return parser.get_format_instructions()
+
+    @staticmethod
+    def parse_output(parser: StructuredOutputParser, output: str) -> Dict[str, Any]:
+        """
+        Parse structured output from a model response.
+
+        Args:
+            parser (StructuredOutputParser): The parser to use
+            output (str): The string output from the model
+
+        Returns:
+            dict: A dictionary containing the parsed data
+        """
+        return parser.parse(output)
 
     @handle_exception
-    def get_structured_completion(
-        self,
-        text: str,
-        schema_name: Optional[str] = None,
-        custom_template: Optional[str] = None,
-        model: Optional[str] = None,
-        temperature: Optional[float] = None,
+    def get_parser(self, name: str) -> Optional[StructuredOutputParser]:
+        """
+        Get a preloaded parser by name.
+
+        Args:
+            name (str): Name of the parser/schema
+
+        Returns:
+            StructuredOutputParser (optional): The parser or None if not found
+        """
+        return self._parsers.get(name)
+
+
+class TextProcessor:
+    """High-level interface for common text processing tasks."""
+
+    def __init__(self, config: Optional[Union[Config | Dict]] = None):
+        """
+        Initialize the text processor.
+
+        Args:
+            config (Config or dict, optional): Configuration object or dictionary
+        """
+        self.params = Config(config) if isinstance(config, dict) else config or Config()
+        self.llm_client = LLMClient(self.params)
+        self.prompt_manager = PromptManager(self.params)
+        self.output_parser = OutputParser(self.params)
+
+    @handle_exception
+    def translate_text(
+        self, text: Optional[str] = None, style: Optional[str] = None
+    ) -> str:
+        """
+        Translate text to a different style.
+
+        Args:
+            text (str, optional): The text to translate, defaults to config.source if None
+            style (str, optional): The target style description, defaults to config.style if None
+
+        Returns:
+            str: Translated text
+        """
+        text = text or self.params.source
+        target_style = style or self.params.style
+
+        template = self.prompt_manager.get_template() or self.prompt_manager.create_template(
+            """Translate the text that is delimited by triple backticks 
+            into a style that is {style}.
+            text: ```{text}```
+            """
+        )
+        messages = self.prompt_manager.format_messages(
+            template, style=target_style, text=text
+        )
+        return self.llm_client.chat(messages)
+
+    @handle_exception
+    def extract_structured_info(
+        self, text: str, schema_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Get a structured completion from the LLM using a schema parser.
+        """
+        Extract structured information from text using configured schemas.
+
         Args:
             text (str): The text to analyze
-            schema_name (str, optional): Name of the schema to use
-            custom_template (str, optional): Custom template for this request
-            model (str, optional): Override the default model
-            temperature (float, optional): Override the default temperature
-        Returns:
-            Dict[str, Any]: Structured data parsed from the LLM response
-        """
-        parser = self.create_schema_parser(schema_name)
-        format_instructions = parser.get_format_instructions()
+            schema_name (str, optional): Name of the schema to use, defaults to config.schema_name if None
 
-        # Use provided template, default schema template, or fallback
-        template = (
-            custom_template
-            or self._params.schema_template
-            or (
-                "For the following text, extract information according to these instructions:\n"
-                "{format_instructions}\n\n"
-                "Text: {text}"
-            )
+        Returns:
+            Dictionary with extracted information
+        """
+        schema_to_use = schema_name or self.params.schema_name
+        parser = self.output_parser.get_parser(schema_to_use)
+
+        if not parser:
+            raise ValueError(f"Schema '{schema_to_use}' not found in configuration")
+
+        format_instructions = self.output_parser.get_format_instructions(parser)
+
+        template_str = (
+            self.params.schema_template
+            or """For the following text, extract the following information:
+            {format_instructions}
+            
+            text: {text}
+            """
         )
 
-        prompt = template.format(format_instructions=format_instructions, text=text)
-
-        llm = self._get_llm(model, temperature)
-        messages = [HumanMessage(content=prompt)]
-        response = llm(messages).content
-
-        return parser.parse(response)
-
-    @handle_exception
-    def get_example(self, example_name: str) -> Dict[str, str]:
-        """Get a specific example by name.
-        Args:
-            example_name (str): Name of the example to retrieve
-        Returns:
-            Dict[str, str]: The example data
-        """
-        if example_name not in self._examples:
-            raise ValueError(f"Example '{example_name}' not found")
-        return self._examples[example_name]
-
-    @handle_exception
-    def get_example_completion(
-        self,
-        example_name: str,
-        model: Optional[str] = None,
-        temperature: Optional[float] = None,
-    ) -> str:
-        """Get a formatted completion using a named example.
-        Args:
-            example_name (str): Name of the example to use
-            model (str, optional): Override the default model
-            temperature (float, optional): Override the default temperature
-        Returns:
-            str: The formatted completion
-        """
-        example = self.get_example(example_name)
-        return self.get_formatted_completion(
-            source=example.get("source", ""),
-            style=example.get("style", ""),
-            model=model,
-            temperature=temperature,
+        template = self.prompt_manager.create_template(template_str)
+        messages = self.prompt_manager.format_messages(
+            template, text=text, format_instructions=format_instructions
         )
+
+        response = self.llm_client.chat(messages)
+        return self.output_parser.parse_output(parser, response)
+
+    # For backward compatibility
+    @handle_exception
+    def extract_review_info(self, review_text: str) -> Dict[str, Any]:
+        """
+        Extract information from a product review (legacy method).
+
+        Args:
+            review_text (str): The review text to analyze
+
+        Returns:
+            Dictionary with extracted information
+        """
+        return self.extract_structured_info(review_text, "product_review")

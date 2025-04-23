@@ -1,9 +1,10 @@
 from functools import wraps
 import logging
+import inspect
 
 # logger configuration
 logging.basicConfig(
-    level=logging.ERROR,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)d - %(message)s : ",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
@@ -18,10 +19,15 @@ def handle_exception(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            # error logging
-            logger.error(f"Error in {func.__name__}: {str(e)}")
-            # return None or handle the error as needed
-            print(f"An error has occurred in {func.__name__}: {str(e)}")
+            # Get the caller's frame to log the correct module and line info
+            frame = inspect.currentframe().f_back
+            module_name = frame.f_globals["__name__"]
+            line_no = frame.f_lineno
+
+            # Log the error with the caller's context
+            logger.error(
+                f"Error in {func.__name__} (module: {module_name}, line: {line_no}): {str(e)}"
+            )
             return None
 
     return wrapper

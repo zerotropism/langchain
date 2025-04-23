@@ -6,8 +6,9 @@ defaults:
   template: >
     Translate the text
     that is delimited by triple backticks 
-    into a style that is {style}.
-    text: ```{source}```
+    into a style that is {style}. Do not add any explainations or
+    additional information. Just return the translated text.
+    text: ```{text}```
   source: |
     Arrr, I be fuming that me blender lid
     flew off and splattered me kitchen walls
