@@ -17,7 +17,7 @@ from langchain_ollama import ChatOllama
 from langchain.schema import HumanMessage
 from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
-from decorators import handle_exception
+from decorators import handle_exception, timing_decorator
 
 
 class Config:
@@ -134,6 +134,7 @@ class PromptManager:
             self._templates["default"] = self.create_template(self.params.template)
 
     @staticmethod
+    @handle_exception
     def create_template(template_string: str) -> ChatPromptTemplate:
         """
         Create a chat prompt template from a string.
@@ -147,6 +148,7 @@ class PromptManager:
         return ChatPromptTemplate.from_template(template_string)
 
     @staticmethod
+    @handle_exception
     def format_messages(template: ChatPromptTemplate, **kwargs) -> List[HumanMessage]:
         """
         Format a template with values.
@@ -201,6 +203,7 @@ class OutputParser:
             self._parsers[schema_name] = self.create_json_parser(schema_def)
 
     @staticmethod
+    @handle_exception
     def create_json_parser(
         schema_definitions: List[Dict[str, str]],
     ) -> StructuredOutputParser:
@@ -221,6 +224,7 @@ class OutputParser:
         return StructuredOutputParser.from_response_schemas(schemas)
 
     @staticmethod
+    @handle_exception
     def get_format_instructions(parser: StructuredOutputParser) -> str:
         """
         Get formatting instructions for a given parser.
@@ -234,6 +238,7 @@ class OutputParser:
         return parser.get_format_instructions()
 
     @staticmethod
+    @handle_exception
     def parse_output(parser: StructuredOutputParser, output: str) -> Dict[str, Any]:
         """
         Parse structured output from a model response.
@@ -277,6 +282,7 @@ class TextProcessor:
         self.output_parser = OutputParser(self.params)
 
     @handle_exception
+    @timing_decorator
     def translate_text(
         self, text: Optional[str] = None, style: Optional[str] = None
     ) -> str:
@@ -305,7 +311,8 @@ class TextProcessor:
         return self.llm_client.chat(messages)
 
     @handle_exception
-    def extract_structured_info(
+    @timing_decorator
+    def extract_review_info(
         self, text: str, schema_name: Optional[str] = None
     ) -> Dict[str, Any]:
         """
@@ -342,17 +349,3 @@ class TextProcessor:
 
         response = self.llm_client.chat(messages)
         return self.output_parser.parse_output(parser, response)
-
-    # For backward compatibility
-    @handle_exception
-    def extract_review_info(self, review_text: str) -> Dict[str, Any]:
-        """
-        Extract information from a product review (legacy method).
-
-        Args:
-            review_text (str): The review text to analyze
-
-        Returns:
-            Dictionary with extracted information
-        """
-        return self.extract_structured_info(review_text, "product_review")
