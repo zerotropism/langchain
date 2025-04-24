@@ -17,8 +17,7 @@ from typing import Any, Callable, TypeVar, cast
 
 # Logger configuration
 logging.basicConfig(
-    level=logging.ERROR,
-    # format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(name)s - %(filename)s - %(funcName)s - %(lineno)d - %(message)s : ",
     handlers=[
         logging.StreamHandler(sys.stdout),
@@ -94,14 +93,13 @@ Stack trace:
             )
             print("Check the log file for more details.")
 
-            # We can choose to propagate the exception or return None
-            # Here we propagate to allow custom handling at a higher level
+            # Propagate exception to allow custom handling at a higher level
             raise
 
     return cast(F, wrapper)
 
 
-# Examples of other useful decorators that could complement this module
+# Timing decorator for performance measurement
 def timing_decorator(func: F) -> F:
     """Measures and logs the execution time of a function."""
 
@@ -118,6 +116,7 @@ def timing_decorator(func: F) -> F:
     return cast(F, wrapper)
 
 
+# Retry for external APIs or unreliable functions
 def retry(max_attempts: int = 3, delay: float = 1.0):
     """
     Decorator that retries the function execution if it fails.
