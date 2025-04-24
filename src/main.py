@@ -1,3 +1,4 @@
+import os
 import yaml
 from typing import Dict
 from parsing import LLMClient, TextProcessor
@@ -107,6 +108,8 @@ def main(mode: str = ""):
 
 
 if __name__ == "__main__":
+    if not os.path.exists("../logs"):
+        os.makedirs("../logs")
     print(
         """
 What do you want to do? (i.e. prompt, chat, rag, agent, evaluate)
