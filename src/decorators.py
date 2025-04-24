@@ -12,7 +12,6 @@ import logging
 import functools
 import traceback
 import time
-import inspect
 import sys
 from typing import Any, Callable, TypeVar, cast
 
