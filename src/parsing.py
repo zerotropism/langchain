@@ -17,63 +17,70 @@ from langchain_ollama import ChatOllama
 from langchain.schema import HumanMessage
 from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
+from config import Config
 from decorators import handle_exception, timing_decorator
 
 
-class Config:
-    """Configuration class for managing global settings."""
+# class Config:
+#     """Configuration class for managing global settings."""
 
-    def __init__(self, config_data: Optional[Dict] = None):
-        # Default LLM configuration
-        self.model = "gemma3:12b"
-        self.temperature = 0.0
+#     def __init__(self, config_data: Optional[Dict] = None):
+#         # Default LLM configuration
+#         self.model = "gemma3:12b"
+#         self.temperature = 0.0
 
-        # Default Prompt configuration
-        self.prompt = "What is 1+1?"
-        self.template = "Format the following message: {source} into the style: {style}"
-        self.source = ""
-        self.style = ""
+#         # Default Prompt configuration
+#         self.prompt = "What is 1+1?"
+#         self.template = "Format the following message: {source} into the style: {style}"
+#         self.source = ""
+#         self.style = ""
 
-        # Default Schema configuration
-        self.schema_name = ""
-        self.schema_template = ""
+#         # Default Schema configuration
+#         self.schema_name = ""
+#         self.schema_template = ""
 
-        # Custom default settings if provided
-        if config_data and "defaults" in config_data:
-            defaults = config_data["defaults"]
-            self.model = defaults.get("model", self.model)
-            self.temperature = defaults.get("temperature", self.temperature)
-            self.prompt = defaults.get("prompt", self.prompt)
-            self.template = defaults.get("template", self.template)
-            self.source = defaults.get("source", self.source)
-            self.style = defaults.get("style", self.style)
-            self.schema_name = defaults.get("schema_name", self.schema_name)
-            self.schema_template = defaults.get("schema_template", self.schema_template)
+#         # Custom default settings if provided
+#         if config_data and "defaults" in config_data:
+#             defaults = config_data["defaults"]
+#             self.model = defaults.get("model", self.model)
+#             self.temperature = defaults.get("temperature", self.temperature)
+#             self.prompt = defaults.get("prompt", self.prompt)
+#             self.template = defaults.get("template", self.template)
+#             self.source = defaults.get("source", self.source)
+#             self.style = defaults.get("style", self.style)
+#             self.schema_name = defaults.get("schema_name", self.schema_name)
+#             self.schema_template = defaults.get("schema_template", self.schema_template)
 
-            # Store the complete config data for other components to access
-            self._config_data = config_data or {}
+#             # Store the complete config data for other components to access
+#             self._config_data = config_data or {}
 
-    def get_schemas(self) -> Dict[str, List[Dict[str, str]]]:
-        """
-        Retrieve schema definitions from the configuration.
+#     def get_schemas(self) -> Dict[str, List[Dict[str, str]]]:
+#         """
+#         Retrieve schema definitions from the configuration.
+#         Returns:
+#             dict: A dictionary where keys are schema names and values are lists of schema definitions
+#         """
+#         return self._config_data.get("schemas", {})
 
-        Returns:
-            dict: A dictionary where keys are schema names and values are lists of schema definitions
-        """
-        return self._config_data.get("schemas", {})
+#     def get_examples(self) -> Dict[str, Dict[str, str]]:
+#         """
+#         Retrieve example data from the configuration.
+#         Returns:
+#             dict: A dictionary where keys are example names and values are dictionaries of example data
+#         """
+#         return self._config_data.get("examples", {})
 
 
 class LLMClient:
     """Base client for interacting with language models."""
 
-    def __init__(self, config: Optional[Union[Config | Dict]] = None):
+    def __init__(self, config: Optional[Config] = None):
         """
         Initialize the LLM client.
-
         Args:
-            config (Config or dict, optional): Configuration object or dictionary
+            config (Config, optional): Pre-loaded settings from the configuration file
         """
-        self.params = Config(config) if isinstance(config, dict) else config or Config()
+        self.params = config
         self.model = self.params.model
         self.temperature = self.params.temperature
         self._chat_model = None
@@ -90,10 +97,8 @@ class LLMClient:
     def get_completion(self, prompt: Optional[str] = None) -> str:
         """
         Get completion from a simple prompt.
-
         Args:
             prompt (str, optional): The text prompt to send to the model, falls back to simplistic default prompt
-
         Returns:
             str: The model's response as a string
         """
@@ -105,10 +110,8 @@ class LLMClient:
     def chat(self, messages: List[HumanMessage]) -> str:
         """
         Send a list of messages to the chat model.
-
         Args:
             messages (list[HumanMessage]): List of formatted messages
-
         Returns:
             str: The model's response as a string
         """
@@ -119,14 +122,13 @@ class LLMClient:
 class PromptManager:
     """Manager for creating and formatting prompt templates."""
 
-    def __init__(self, config: Optional[Union[Config | Dict]] = None):
+    def __init__(self, config: Optional[Config] = None):
         """
         Initialize the prompt manager.
-
         Args:
-            config (Config or dict, optional): Configuration object or dictionary
+            config (Config, optional): Pre-loaded settings from the configuration file
         """
-        self.params = Config(config) if isinstance(config, dict) else config or Config()
+        self.params = config
         self._templates = {}
 
         # Preload default template if available
@@ -138,10 +140,8 @@ class PromptManager:
     def create_template(template_string: str) -> ChatPromptTemplate:
         """
         Create a chat prompt template from a string.
-
         Args:
             template_string (str): The template string with variables in {curly_braces}
-
         Returns:
             ChatPromptTemplate: A ChatPromptTemplate object
         """
@@ -152,11 +152,9 @@ class PromptManager:
     def format_messages(template: ChatPromptTemplate, **kwargs) -> List[HumanMessage]:
         """
         Format a template with values.
-
         Args:
             template (ChatPromptTemplate): The prompt template
             **kwargs: The values to fill into the template
-
         Returns:
             list: Formatted messages ready to send to the model
         """
@@ -166,10 +164,8 @@ class PromptManager:
     def get_template(self, name: str = "default") -> Optional[ChatPromptTemplate]:
         """
         Get a pre-loaded template by name.
-
         Args:
             name (str): Name of the template
-
         Returns:
             ChatPromptTemplate (optional): The template or None if not found
         """
@@ -188,18 +184,17 @@ class PromptManager:
 class OutputParser:
     """Parser for structured outputs from language models."""
 
-    def __init__(self, config: Optional[Union[Config | Dict]] = None):
+    def __init__(self, config: Optional[Config] = None):
         """
         Initialize the output parser.
-
         Args:
-            config (Config or dict, optional): Configuration object or dictionary
+            config (Config, optional): Pre-loaded settings from the configuration file
         """
-        self.params = Config(config) if isinstance(config, dict) else config or Config()
+        self.params = config
         self._parsers = {}
 
         # Preload parsers from config schemas
-        for schema_name, schema_def in self.params.get_schemas().items():
+        for schema_name, schema_def in self.params.get_schemas.items():
             self._parsers[schema_name] = self.create_json_parser(schema_def)
 
     @staticmethod
@@ -209,11 +204,9 @@ class OutputParser:
     ) -> StructuredOutputParser:
         """
         Create a parser for JSON-formatted outputs.
-
         Args:
             schema_definitions (list): List of dictionaries containing schema definitions
             Each dict should have 'name' and 'description' keys
-
         Returns:
             StructuredOutputParser: A configured StructuredOutputParser
         """
@@ -228,10 +221,8 @@ class OutputParser:
     def get_format_instructions(parser: StructuredOutputParser) -> str:
         """
         Get formatting instructions for a given parser.
-
         Args:
             parser (StructuredOutputParser): The parser to get instructions for
-
         Returns:
             str: Formatting instructions as a string
         """
@@ -242,11 +233,9 @@ class OutputParser:
     def parse_output(parser: StructuredOutputParser, output: str) -> Dict[str, Any]:
         """
         Parse structured output from a model response.
-
         Args:
             parser (StructuredOutputParser): The parser to use
             output (str): The string output from the model
-
         Returns:
             dict: A dictionary containing the parsed data
         """
@@ -256,10 +245,8 @@ class OutputParser:
     def get_parser(self, name: str) -> Optional[StructuredOutputParser]:
         """
         Get a preloaded parser by name.
-
         Args:
             name (str): Name of the parser/schema
-
         Returns:
             StructuredOutputParser (optional): The parser or None if not found
         """
@@ -269,14 +256,13 @@ class OutputParser:
 class TextProcessor:
     """High-level interface for common text processing tasks."""
 
-    def __init__(self, config: Optional[Union[Config | Dict]] = None):
+    def __init__(self, config: Optional[Config] = None):
         """
         Initialize the text processor.
-
         Args:
-            config (Config or dict, optional): Configuration object or dictionary
+            config (Config, optional): Pre-loaded settings from the configuration file
         """
-        self.params = Config(config) if isinstance(config, dict) else config or Config()
+        self.params = config
         self.llm_client = LLMClient(self.params)
         self.prompt_manager = PromptManager(self.params)
         self.output_parser = OutputParser(self.params)
@@ -288,11 +274,9 @@ class TextProcessor:
     ) -> str:
         """
         Translate text to a different style.
-
         Args:
             text (str, optional): The text to translate, defaults to config.source if None
             style (str, optional): The target style description, defaults to config.style if None
-
         Returns:
             str: Translated text
         """
@@ -317,13 +301,11 @@ class TextProcessor:
     ) -> Dict[str, Any]:
         """
         Extract structured information from text using configured schemas.
-
         Args:
             text (str): The text to analyze
             schema_name (str, optional): Name of the schema to use, defaults to config.schema_name if None
-
         Returns:
-            Dictionary with extracted information
+            dict: Dictionary with extracted information
         """
         schema_to_use = schema_name or self.params.schema_name
         parser = self.output_parser.get_parser(schema_to_use)
