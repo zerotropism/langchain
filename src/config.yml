@@ -2,6 +2,7 @@
 defaults:
   model: "gemma3:12b"
   temperature: 0.0
+  memory: "buffer"
   prompt: "What is 1+1?"
   template: >
     Translate the text
@@ -77,3 +78,9 @@ schemas:
       description: >
         Extract any sentences about the value or price,
         and output them as a comma separated Python list.
+
+# Memory settings for continuous conversation
+memory:
+  memory_type: "buffer"
+  window_size: 3
+  token_limit: 100

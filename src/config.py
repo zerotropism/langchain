@@ -2,38 +2,46 @@ from typing import List, Dict, Optional
 from decorators import handle_exception
 
 
-class Config:
+class ConfigManager:
     """Configuration class for managing global settings."""
 
     def __init__(self, config_data: Optional[Dict] = None):
         # Default LLM configuration
-        self.model = "gemma3:12b"
-        self.temperature = 0.0
+        self._model = "gemma3:12b"
+        self._temperature = 0.0
+
+        # Default Memory configuration
+        self._memory = "buffer"
 
         # Default Prompt configuration
-        self.prompt = "What is 1+1?"
-        self.template = "Format the following message: {source} into the style: {style}"
-        self.source = ""
-        self.style = ""
+        self._prompt = "What is 1+1?"
+        self._template = (
+            "Format the following message: {source} into the style: {style}"
+        )
+        self._source = ""
+        self._style = ""
 
         # Default Schema configuration
-        self.schema_name = ""
-        self.schema_template = ""
+        self._schema_name = ""
+        self._schema_template = ""
 
         # Default Example configuration
-        self.examples = {}
+        self._examples = {}
 
         # Custom settings if provided
         if config_data and "defaults" in config_data:
             defaults = config_data["defaults"]
-            self.model = defaults.get("model", self.model)
-            self.temperature = defaults.get("temperature", self.temperature)
-            self.prompt = defaults.get("prompt", self.prompt)
-            self.template = defaults.get("template", self.template)
-            self.source = defaults.get("source", self.source)
-            self.style = defaults.get("style", self.style)
-            self.schema_name = defaults.get("schema_name", self.schema_name)
-            self.schema_template = defaults.get("schema_template", self.schema_template)
+            self._model = defaults.get("model", self._model)
+            self._temperature = defaults.get("temperature", self._temperature)
+            self._memory = defaults.get("memory", self._memory)
+            self._prompt = defaults.get("prompt", self._prompt)
+            self._template = defaults.get("template", self._template)
+            self._source = defaults.get("source", self._source)
+            self._style = defaults.get("style", self._style)
+            self._schema_name = defaults.get("schema_name", self._schema_name)
+            self._schema_template = defaults.get(
+                "schema_template", self._schema_template
+            )
 
             # Store the complete config data for other components to access
             self._config_data = config_data or {}
@@ -46,8 +54,8 @@ class Config:
             dict: The model name and temperature settings
         """
         return {
-            "model": self.model or self._config_data.get("model"),
-            "temperature": self.temperature or self._config_data.get("temperature"),
+            "model": self._model or self._config_data.get("model"),
+            "temperature": self._temperature or self._config_data.get("temperature"),
         } or {}
 
     @property
@@ -58,10 +66,10 @@ class Config:
             dict: The last  prompt and template loaded settings
         """
         return {
-            "prompt": self.prompt or self._config_data.get("prompt"),
-            "template": self.template or self._config_data.get("template"),
-            "source": self.source or self._config_data.get("source"),
-            "style": self.style or self._config_data.get("style"),
+            "prompt": self._prompt or self._config_data.get("prompt"),
+            "template": self._template or self._config_data.get("template"),
+            "source": self._source or self._config_data.get("source"),
+            "style": self._style or self._config_data.get("style"),
         } or {}
 
     @property
@@ -81,3 +89,21 @@ class Config:
             dict: A dictionary where keys are example names and values are dictionaries of example data
         """
         return self._config_data.get("examples", {})
+
+    @property
+    def get_memory_params(self) -> Dict[str, str]:
+        """
+        Retrieve the memory settings from the configuration.
+        Returns:
+            str: The memory type
+        """
+        return self._config_data.get("memory", self.memory)
+
+    @property
+    def get_config_data(self) -> Dict:
+        """
+        Retrieve the complete configuration data.
+        Returns:
+            dict: The complete configuration data
+        """
+        return self._config_data or {}

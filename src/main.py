@@ -1,8 +1,9 @@
 import os
 import yaml
 from typing import Dict
-from config import Config
-from parsing import LLMClient, TextProcessor
+from config import ConfigManager
+from llm import LLMClient
+from processing import TextProcessor
 from memory import MemoryFactory
 
 
@@ -22,7 +23,7 @@ Input your choice:
     return mode
 
 
-def load_configurations(path: str = "src/config.yml") -> dict:
+def load_configurations(path: str = "src/config.yml") -> Dict:
     """Load configuration from a YAML file.
     Args:
         path (str, optional): path to the YAML file, defaults to "config.yml"
@@ -37,31 +38,24 @@ def load_configurations(path: str = "src/config.yml") -> dict:
         return {}
 
 
-def prompt(conf: Config):
+def prompt(conf: ConfigManager):
     """Prompt mode.
     Args:
-        conf (dict): configurations to pass to the function
+        conf (ConfigManager): configurations to pass to the function
     """
-    # instantiate the LLM client
-    llm = LLMClient(conf)
-
-    # Get a simple completion
-    simple_completion = llm.get_completion()
-    print("\nSimple completion:\n", simple_completion)
-
-    # Instantiate the template-based text processor
+    # Instantiate the text processor instance
     processor = TextProcessor(conf)
 
-    # Get a completion with a template
-    templated_completion = processor.translate_text()
+    # Get a simple completion
+    simple_completion = processor.generate()
+    print("\nSimple completion:\n", simple_completion)
+
+    # Get a completion using a template
+    templated_completion = processor.translate()
     print("\nTemplated completion (translation):\n", templated_completion)
 
-    # Extract information from a text from same processor
-    product_review = conf.get_examples.get("product_review", {}).get("source", "")
-    if not product_review:
-        print("Error: 'product_review' source not found in configuration.")
-        return
-    extracted_info = processor.extract_review_info(product_review)
+    # Extract information from a text using a schema
+    extracted_info = processor.extract()
     print("\nExtracted information from product review:")
     for key, value in extracted_info.items():
         print(f"{key}: {value}")
@@ -69,13 +63,14 @@ def prompt(conf: Config):
     return
 
 
-def chat(conf: Config):
+def chat(conf: ConfigManager):
     """Chat mode.
     Args:
-        conf (dict): configurations to pass to the function
+        conf (ConfigManager): configurations to pass to the function
     """
     # Create a buffer memory manager
-    buffer_memory = MemoryFactory.create_memory_manager("buffer", verbose=True)
+    # buffer_memory = MemoryFactory.create_memory_manager("buffer", verbose=True)
+    buffer_memory = MemoryFactory.create_memory_manager(conf, verbose=True)
 
     # Demonstration of buffer memory
     buffer_memory.predict("Hi, my name is Philantenne!")
@@ -85,6 +80,7 @@ def chat(conf: Config):
     print(f"Memory: {buffer_memory.get_memory_content()}")
 
     # Create a window memory manager with window size 2
+    # window_memory = MemoryFactory.create_memory_manager("window", window_size=2)
     window_memory = MemoryFactory.create_memory_manager("window", window_size=2)
 
     # Demonstration of window memory
@@ -122,29 +118,29 @@ def chat(conf: Config):
     pass
 
 
-def rag(conf: Dict):
+def rag(conf: ConfigManager):
     """RAG mode."""
     # Implement the logic for RAG mode here
     pass
 
 
-def agent(conf: Dict):
+def agent(conf: ConfigManager):
     """Agent mode."""
     # Implement the logic for agent mode here
     pass
 
 
-def evaluate(conf: Dict):
+def evaluate(conf: ConfigManager):
     """Evaluate mode."""
     # Implement the logic for evaluate mode here
     pass
 
 
-def run_mode(mode: str, conf: Dict):
+def run_mode(mode: str, conf: ConfigManager):
     """Run the specified mode.
     Args:
         mode (str): mode as function name to run
-        conf (dict): configurations to pass to the function
+        conf (ConfigManager): configurations to pass to the function
     """
     try:
         # Get the function corresponding to the mode
@@ -175,7 +171,7 @@ def main():
         conf_data = load_configurations(path="./config.yml")
 
         # Instantiate the Config class with loaded settings
-        conf = Config(conf_data)
+        conf = ConfigManager(conf_data)
 
         # Run the appropriate mode
         run_mode(mode, conf)
