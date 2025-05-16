@@ -68,54 +68,57 @@ def chat(conf: ConfigManager):
     Args:
         conf (ConfigManager): configurations to pass to the function
     """
-    # Create a buffer memory manager
-    # buffer_memory = MemoryFactory.create_memory_manager("buffer", verbose=True)
-    buffer_memory = MemoryFactory.create_memory_manager(conf, verbose=True)
+    processor = TextProcessor(conf)
+    processor.chat()
 
-    # Demonstration of buffer memory
-    buffer_memory.predict("Hi, my name is Philantenne!")
-    buffer_memory.predict("What is 1+1?")
-    response = buffer_memory.predict("What is my name?")
-    print(f"Response: {response}")
-    print(f"Memory: {buffer_memory.get_memory_content()}")
+    # # Create a buffer memory manager
+    # # buffer_memory = MemoryFactory.create_memory_manager("buffer", verbose=True)
+    # buffer_memory = MemoryFactory.create_memory_manager(conf, verbose=True)
 
-    # Create a window memory manager with window size 2
+    # # Demonstration of buffer memory
+    # buffer_memory.predict("Hi, my name is Philantenne!")
+    # buffer_memory.predict("What is 1+1?")
+    # response = buffer_memory.predict("What is my name?")
+    # print(f"Response: {response}")
+    # print(f"Memory: {buffer_memory.get_memory_content()}")
+
+    # # Create a window memory manager with window size 2
+    # # window_memory = MemoryFactory.create_memory_manager("window", window_size=2)
     # window_memory = MemoryFactory.create_memory_manager("window", window_size=2)
-    window_memory = MemoryFactory.create_memory_manager("window", window_size=2)
 
-    # Demonstration of window memory
-    window_memory.predict("Hi, my name is Philantenne!")
-    window_memory.predict("What is 1+1?")
-    window_memory.predict("What is my name?")
-    print(f"Window Memory: {window_memory.get_memory_content()}")
+    # # Demonstration of window memory
+    # window_memory.predict("Hi, my name is Philantenne!")
+    # window_memory.predict("What is 1+1?")
+    # window_memory.predict("What is my name?")
+    # print(f"Window Memory: {window_memory.get_memory_content()}")
 
-    # Create a token memory manager
-    token_memory = MemoryFactory.create_memory_manager("token", max_token_limit=50)
+    # # Create a token memory manager
+    # token_memory = MemoryFactory.create_memory_manager("token", max_token_limit=50)
 
-    # Manually add context to token memory
-    token_memory.add_to_memory("AI is what?!", "Amazing!")
-    token_memory.add_to_memory("Backpropagation is what?", "Beautiful!")
-    token_memory.add_to_memory("Chatbots are what?", "Charming!")
-    print(f"Token Memory: {token_memory.get_memory_content()}")
+    # # Manually add context to token memory
+    # token_memory.add_to_memory("AI is what?!", "Amazing!")
+    # token_memory.add_to_memory("Backpropagation is what?", "Beautiful!")
+    # token_memory.add_to_memory("Chatbots are what?", "Charming!")
+    # print(f"Token Memory: {token_memory.get_memory_content()}")
 
-    # Create a summary memory manager
-    summary_memory = MemoryFactory.create_memory_manager("summary", max_token_limit=100)
+    # # Create a summary memory manager
+    # summary_memory = MemoryFactory.create_memory_manager("summary", max_token_limit=100)
 
-    # Add a long schedule to summary memory
-    schedule = """There is a meeting at 8am with your product team. 
-    You will need your powerpoint presentation prepared. 
-    9am-12pm have time to work on your LangChain project which will go quickly 
-    because Langchain is such a powerful tool. At Noon, lunch at the italian 
-    restaurant with a customer who is driving from over an hour away to meet 
-    you to understand the latest in AI. Be sure to bring your laptop to show 
-    the latest LLM demo."""
+    # # Add a long schedule to summary memory
+    # schedule = """There is a meeting at 8am with your product team.
+    # You will need your powerpoint presentation prepared.
+    # 9am-12pm have time to work on your LangChain project which will go quickly
+    # because Langchain is such a powerful tool. At Noon, lunch at the italian
+    # restaurant with a customer who is driving from over an hour away to meet
+    # you to understand the latest in AI. Be sure to bring your laptop to show
+    # the latest LLM demo."""
 
-    summary_memory.add_to_memory("What is on the schedule today?", schedule)
-    print(f"Summary Memory: {summary_memory.get_memory_content()}")
+    # summary_memory.add_to_memory("What is on the schedule today?", schedule)
+    # print(f"Summary Memory: {summary_memory.get_memory_content()}")
 
-    response = summary_memory.predict("What would be a good demo to show?")
-    print(f"Response about demo: {response}")
-    pass
+    # response = summary_memory.predict("What would be a good demo to show?")
+    # print(f"Response about demo: {response}")
+    # pass
 
 
 def rag(conf: ConfigManager):

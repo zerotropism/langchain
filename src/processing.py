@@ -3,6 +3,7 @@ from config import ConfigManager
 from llm import LLMClient
 from prompting import PromptManager
 from parsing import OutputParser
+from memory import MemoryFactory
 from decorators import handle_exception, timing_decorator
 
 
@@ -33,16 +34,39 @@ class TextProcessor:
             str: The model's response as a string
         """
         formatted_prompt = self.prompt_manager.formatter(prompt=prompt, **kwargs)
-        response = self.llm_client.run.invoke(formatted_prompt)
+        llm = self.llm_client.infer()
+        response = llm.invoke(formatted_prompt)
         return response.content
 
     @handle_exception
     @timing_decorator
-    def chat(self):
+    def chat(self, memory_type: Optional[str] = "buffer"):
         """
         Start a memory-capable chat instance.
         """
-        pass
+        # Check if memory type is passed, otherwise use the default from configuration
+        memory_type = (
+            memory_type.lower()
+            if memory_type
+            else self._params.get("memory", {}).get("memory_type", "buffer")
+        )
+
+        # Create the appropriate memory manager
+        llm_with_memory = MemoryFactory.create_memory_manager(
+            self.llm_client, memory_type, verbose=True
+        )
+        print(
+            f"You can now start chatting with the model {self._params._model}. Type 'exit' to quit.\n"
+        )
+
+        # Start the chat loop
+        while True:
+            user_input = input("You: ")
+            if user_input.lower() == "exit":
+                break
+            response = llm_with_memory.predict(user_input)
+            print(f"AI: {response}")
+            llm_with_memory.add_to_memory(user_input, response)
 
     @handle_exception
     @timing_decorator

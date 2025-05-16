@@ -1,13 +1,6 @@
-"""
-LangChain Memory Manager - A clean implementation of various memory types
-for conversational LLM applications.
-
-This module provides structured access to different memory implementations
-in LangChain, with proper configuration and utility methods.
-"""
-
 from typing import Dict, List, Optional, Any, Union
 from abc import ABC, abstractmethod
+from llm import LLMClient
 
 from langchain.memory import (
     ConversationBufferMemory,
@@ -17,9 +10,6 @@ from langchain.memory import (
 )
 from langchain.chains import ConversationChain
 from langchain.llms.base import BaseLLM
-from langchain_ollama import ChatOllama
-from config import ConfigManager
-from decorators import handle_exception, timing_decorator
 
 
 class BaseMemoryManager(ABC):
@@ -140,82 +130,29 @@ class SummaryMemoryManager(BaseMemoryManager):
         )
 
 
-class CustomTokenCountLLM(ChatOllama):
-    """Custom LLM class that overrides token counting methods."""
-
-    def get_num_tokens(self, text: str) -> int:
-        """Count tokens in a text string."""
-        # Simple word-based tokenization
-        return len(text.split())
-
-    def get_num_tokens_from_messages(self, messages: List[Union[Dict, Any]]) -> int:
-        """Count tokens in a list of messages."""
-        count = 0
-        for message in messages:
-            # Extract message content from different possible formats
-            if hasattr(message, "content"):
-                content = message.content
-            elif isinstance(message, dict) and "content" in message:
-                content = message["content"]
-            else:
-                content = str(message)
-
-            count += self.get_num_tokens(content)
-        return count
-
-
 class MemoryFactory:
     """Factory class to create appropriate memory managers."""
 
     @staticmethod
     def create_memory_manager(
-        # params: Config,
-        memory_type: str,
-        model_name: str = "gemma3:12b",
-        temperature: float = 0,
+        llm: LLMClient,
+        memory_type: Optional[str] = "buffer",
         **kwargs,
     ) -> BaseMemoryManager:
         """
         Create a memory manager of the specified type.
         Args:
-            memory_type: Type of memory to create ("buffer", "window", "token", "summary")
-            model_name: Name of the model to use
-            temperature: Temperature parameter for the model
-            **kwargs: Additional arguments for specific memory types
+            memory_type: Type of memory to create (`buffer`, `window`, `token`, `summary`)
+            **kwargs: Additional arguments for specific memory types (`window_size`, `max_token_limit`, `verbose`)
         Returns:
             An appropriate memory manager instance
         Raises:
             ValueError: If memory_type is not recognized
         """
-        # # Check if configuration parameters are provided
-        # if params:
-        #     model_params = params.get_model_params()
-
-        #     # Load model parameters
-        #     if model_params:
-        #         model_name = model_params.get("model", "gemma3:12b")
-        #         temperature = model_params.get("temperature", 0)
-        #     else:
-        #         raise ValueError("Missing model parameters from configuration file")
-
-        #     # Load memory settings
-        #     if "memory" in params:
-        #         memory_params = params["memory"]
-        #         memory_type = memory_params.get("memory_type", memory_type)
-        #         window_size = memory_params.get("window_size", 1)
-        #         max_token_limit = memory_params.get("max_token_limit", 100)
-        #     else:
-        #         raise ValueError("Missing memory settings from configuration file")
-
-        # else:
-        #     raise ValueError("Missing global settings from configuration file")
-
         # Create the appropriate LLM
-        if memory_type in ["token", "summary"]:
-            # Use custom token counting for token-based memories
-            llm = CustomTokenCountLLM(model=model_name, temperature=temperature)
-        else:
-            llm = ChatOllama(model=model_name, temperature=temperature)
+        llm = llm.infer(
+            custom_token_count=True if memory_type in ["token", "summary"] else False,
+        )
 
         # Create the appropriate memory manager
         if memory_type == "buffer":

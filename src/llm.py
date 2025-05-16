@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union, List, Dict, Any
 from config import ConfigManager
 from langchain_ollama import ChatOllama
 
@@ -42,10 +42,44 @@ class LLMClient:
         """Get the model parameters."""
         return self._params.get_model_params or {}
 
-    @property
-    def run(self):
+    def infer(
+        self,
+        custom_model: str = None,
+        custom_temperature: str = None,
+        custom_token_count: bool = False,
+    ):
         """Lazy-loaded chat model instance."""
-        self._chat_instance = self._chat_instance or ChatOllama(
-            model=self._model, temperature=self._temperature
+        self._chat_instance = (
+            self._chat_instance
+            or ChatOllama(
+                model=custom_model or self._model,
+                temperature=custom_temperature or self._temperature,
+            )
+            if not custom_token_count
+            else CustomTokenCountLLM(model=self._model, temperature=self._temperature)
         )
         return self._chat_instance
+
+
+class CustomTokenCountLLM(ChatOllama):
+    """Custom LLM class that overrides token counting methods."""
+
+    def get_num_tokens(self, text: str) -> int:
+        """Count tokens in a text string."""
+        # Simple word-based tokenization
+        return len(text.split())
+
+    def get_num_tokens_from_messages(self, messages: List[Union[Dict, Any]]) -> int:
+        """Count tokens in a list of messages."""
+        count = 0
+        for message in messages:
+            # Extract message content from different possible formats
+            if hasattr(message, "content"):
+                content = message.content
+            elif isinstance(message, dict) and "content" in message:
+                content = message["content"]
+            else:
+                content = str(message)
+
+            count += self.get_num_tokens(content)
+        return count
