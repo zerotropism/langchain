@@ -8,18 +8,21 @@ Introduction to langchain python lib classes.
 
 ## Definition
 
-Custom local rag setup with langchain capabilities on:
+LangChain LLM Integration Toolkit
 
-* Prompt management
-* Templating
-* Memory
-* Chaining
-* Evaluating
-* Agents
+Provides a comprehensive, object-oriented implementation for working with LLMs through LangChain.
+
+Features a clean separation of concerns with specialized components for:
+
+* LLM client communication (LLMClient)
+* Prompt template management (PromptManager)
+* Structured output parsing (OutputParser)
+* Text processing operations (TextProcessor)
+* Memory management (MemoryFactory)
 
 ## Content
 
 * `amazon.csv` & `clothing.csv` datasets
-* `notebook.ipynb` building the complete progression
+* `notebook.ipynb` drafting the complete progression
 * `notebooks/` folder decomposing the progression by chapter/task
-* `src/` folder for factored code examples
+* `src/` folder for factored code
