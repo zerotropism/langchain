@@ -1,13 +1,3 @@
-"""
-Utility decorators for the LangChain project
-
-This module provides reusable decorators for:
-- Exception handling
-- Logging
-- Performance measurement
-- Etc.
-"""
-
 import logging
 import functools
 import traceback
@@ -52,14 +42,14 @@ def handle_exception(func: F) -> F:
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            # Gathering contextual information
+            # Get contextual information
             module_name = func.__module__
             function_name = func.__name__
             exception_type = type(e).__name__
             exception_msg = str(e)
             stack_trace = traceback.format_exc()
 
-            # Gathering call argument details
+            # Get call argument details
             # For class methods, exclude 'self' from logs
             call_args = args[1:] if args and hasattr(args[0], func.__name__) else args
 
@@ -84,7 +74,7 @@ Stack trace:
 ===================================
 """
 
-            # Logging
+            # Log the error message
             logger.error(log_message)
 
             # Inform the user that an error occurred

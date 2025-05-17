@@ -25,8 +25,10 @@ Input your choice:
 
 def load_configurations(path: str = "src/config.yml") -> Dict:
     """Load configuration from a YAML file.
+
     Args:
         path (str, optional): path to the YAML file, defaults to "config.yml"
+
     Returns:
         Dict: configurations as a dictionary
     """
@@ -40,10 +42,11 @@ def load_configurations(path: str = "src/config.yml") -> Dict:
 
 def prompt(conf: ConfigManager):
     """Prompt mode.
+
     Args:
         conf (ConfigManager): configurations to pass to the function
     """
-    # Instantiate the text processor instance
+    # The processor is in charge of one-shot generation tasks
     processor = TextProcessor(conf)
 
     # Get a simple completion
@@ -64,7 +67,8 @@ def prompt(conf: ConfigManager):
 
 
 def chat(conf: ConfigManager):
-    """Chat mode.
+    """Chat mode allowing
+
     Args:
         conf (ConfigManager): configurations to pass to the function
     """
@@ -141,9 +145,10 @@ def evaluate(conf: ConfigManager):
 
 def run_mode(mode: str, conf: ConfigManager):
     """Run the specified mode.
+
     Args:
-        mode (str): mode as function name to run
-        conf (ConfigManager): configurations to pass to the function
+        mode (str): mode as a function name to run
+        conf (ConfigManager): configuration settings from `./config.yml` file
     """
     try:
         # Get the function corresponding to the mode
@@ -181,6 +186,8 @@ def main():
 
 
 if __name__ == "__main__":
+
+    # Create local directories for logs
     if not os.path.exists("../logs"):
         os.makedirs("../logs")
 

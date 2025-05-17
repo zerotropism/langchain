@@ -18,9 +18,10 @@ class BaseMemoryManager(ABC):
     def __init__(self, llm: BaseLLM, verbose: bool = False):
         """
         Initialize the memory manager.
+
         Args:
-            llm: The language model to use
-            verbose: Whether to print verbose output
+            llm (`BaseLLM`): The language model to use
+            verbose (`bool`): Whether to print verbose output
         """
         self.llm = llm
         self.verbose = verbose
@@ -56,7 +57,7 @@ class BaseMemoryManager(ABC):
 
 
 class BufferMemoryManager(BaseMemoryManager):
-    """Manager for ConversationBufferMemory."""
+    """Manager for `ConversationBufferMemory`."""
 
     def _create_memory(self) -> ConversationBufferMemory:
         return ConversationBufferMemory()
@@ -67,15 +68,16 @@ class BufferMemoryManager(BaseMemoryManager):
 
 
 class WindowMemoryManager(BaseMemoryManager):
-    """Manager for ConversationBufferWindowMemory."""
+    """Manager for `ConversationBufferWindowMemory` with custom window size."""
 
     def __init__(self, llm: BaseLLM, window_size: int = 1, verbose: bool = False):
         """
         Initialize with a specific window size.
+
         Args:
-            llm: The language model to use
-            window_size: Number of conversation exchanges to remember
-            verbose: Whether to print verbose output
+            llm (`BaseLLM`): The language model to use
+            window_size (`int`): Number of conversation exchanges to remember
+            verbose (`bool`): Whether to print verbose output
         """
         self.window_size = window_size
         super().__init__(llm, verbose)
@@ -91,15 +93,16 @@ class WindowMemoryManager(BaseMemoryManager):
 
 
 class TokenMemoryManager(BaseMemoryManager):
-    """Manager for ConversationTokenBufferMemory with custom tokenization."""
+    """Manager for `ConversationTokenBufferMemory` with custom tokenization."""
 
     def __init__(self, llm: BaseLLM, max_token_limit: int = 100, verbose: bool = False):
         """
         Initialize with a token limit.
+
         Args:
-            llm: The language model to use with token counting capability
-            max_token_limit: Maximum number of tokens to keep in memory
-            verbose: Whether to print verbose output
+            llm (`BaseLLM`): The language model to use with token counting capability
+            max_token_limit (`int`): Maximum number of tokens to keep in memory
+            verbose (`bool`): Whether to print verbose output
         """
         self.max_token_limit = max_token_limit
         super().__init__(llm, verbose)
@@ -111,15 +114,16 @@ class TokenMemoryManager(BaseMemoryManager):
 
 
 class SummaryMemoryManager(BaseMemoryManager):
-    """Manager for ConversationSummaryBufferMemory."""
+    """Manager for `ConversationSummaryBufferMemory`"""
 
     def __init__(self, llm: BaseLLM, max_token_limit: int = 100, verbose: bool = False):
         """
         Initialize with a token limit for summarization.
+
         Args:
-            llm: The language model to use for summarization
-            max_token_limit: Maximum number of tokens before summarizing
-            verbose: Whether to print verbose output
+            llm (`BaseLLM`)): The language model to use for summarization, not customizable for now
+            max_token_limit (`int`): Maximum number of tokens before summarizing
+            verbose (`bool`): Whether to print verbose output
         """
         self.max_token_limit = max_token_limit
         super().__init__(llm, verbose)
@@ -141,13 +145,14 @@ class MemoryFactory:
     ) -> BaseMemoryManager:
         """
         Create a memory manager of the specified type.
+
         Args:
-            memory_type: Type of memory to create (`buffer`, `window`, `token`, `summary`)
+            llm (`LLMClient`): The language model client to use
+            memory_type (`str`, optional): Type of memory to create (`buffer`, `window`, `token`, `summary`), defaults to `buffer`
             **kwargs: Additional arguments for specific memory types (`window_size`, `max_token_limit`, `verbose`)
+
         Returns:
             An appropriate memory manager instance
-        Raises:
-            ValueError: If memory_type is not recognized
         """
         # Create the appropriate LLM
         llm = llm.infer(

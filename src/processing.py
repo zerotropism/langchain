@@ -13,8 +13,9 @@ class TextProcessor:
     def __init__(self, config: Optional[ConfigManager] = None):
         """
         Initialize the text processor.
+
         Args:
-            config (ConfigManager, optional): Pre-loaded settings from the configuration file
+            config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
         """
         self._params = config
         self.llm_client = LLMClient(self._params)
@@ -26,10 +27,13 @@ class TextProcessor:
     def generate(self, prompt: Optional[Any] = None, **kwargs) -> str:
         """
         Generate text based on a prompt.
+
         This method uses the LLMClient to send a prompt to the model and receive a response.
+
         Args:
             prompt: The text prompt.s to send to the model, defaults to config.prompt if None
             **kwargs: Additional keyword arguments to pass to the prompt manager
+
         Returns:
             str: The model's response as a string
         """
@@ -40,9 +44,12 @@ class TextProcessor:
 
     @handle_exception
     @timing_decorator
-    def chat(self, memory_type: Optional[str] = "buffer"):
+    def chat(
+        self, memory_type: Optional[str] = "buffer", verbose: bool = False
+    ) -> None:
         """
         Start a memory-capable chat instance.
+
         """
         # Check if memory type is passed, otherwise use the default from configuration
         memory_type = (
@@ -52,11 +59,12 @@ class TextProcessor:
         )
 
         # Create the appropriate memory manager
-        llm_with_memory = MemoryFactory.create_memory_manager(
-            self.llm_client, memory_type, verbose=True
+        chatbot = MemoryFactory.create_memory_manager(
+            self.llm_client, memory_type, verbose=verbose
         )
         print(
-            f"You can now start chatting with the model {self._params._model}. Type 'exit' to quit.\n"
+            f"You can now start chatting with the model '{self._params._model}'.\
+            Type 'exit' to quit.\n"
         )
 
         # Start the chat loop
@@ -64,18 +72,20 @@ class TextProcessor:
             user_input = input("You: ")
             if user_input.lower() == "exit":
                 break
-            response = llm_with_memory.predict(user_input)
+            response = chatbot.predict(user_input)
             print(f"AI: {response}")
-            llm_with_memory.add_to_memory(user_input, response)
+            chatbot.add_to_memory(user_input, response)
 
     @handle_exception
     @timing_decorator
     def translate(self, text: Optional[str] = None, style: Optional[str] = None) -> str:
         """
         Translate text to a different style.
+
         Args:
-            text (str, optional): The text to translate, defaults to config.source if None
-            style (str, optional): The target style description, defaults to config.style if None
+            text (`str`, optional): The text to translate, defaults to config.source if None
+            style (`str`, optional): The target style description, defaults to config.style if None
+
         Returns:
             str: Translated text
         """
@@ -98,9 +108,11 @@ class TextProcessor:
     ) -> Dict[str, Any]:
         """
         Extract structured information from text using configured schemas.
+
         Args:
-            text (str, optional): The text to analyze, defaults to config.source if None
-            schema_name (str, optional): Name of the schema to use, defaults to config.schema_name if None
+            text (`str`, optional): The text to analyze, defaults to config.source if None
+            schema_name (`str`, optional): Name of the schema to use, defaults to config.schema_name if None
+
         Returns:
             dict: Dictionary with extracted information
         """

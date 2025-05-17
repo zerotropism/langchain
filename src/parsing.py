@@ -15,7 +15,7 @@ class OutputParser:
         """
         Initialize the output parser.
         Args:
-            config (Config, optional): Pre-loaded settings from the configuration file
+            config (ConfigManager, optional): Pre-loaded settings from `./config.yml` file
         """
         self.params = config
         self._parsers = {}

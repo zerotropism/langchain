@@ -49,6 +49,7 @@ class ConfigManager:
     def get_model_params(self) -> Dict[str, str]:
         """
         Retrieve the model name and temperature from the configuration.
+
         Returns:
             dict: The model name and temperature settings
         """
@@ -61,6 +62,7 @@ class ConfigManager:
     def get_prompt_params(self) -> Dict[str, str]:
         """
         Retrieve the prompt and template from the configuration.
+
         Returns:
             dict: The last  prompt and template loaded settings
         """
@@ -75,6 +77,7 @@ class ConfigManager:
     def get_schemas(self) -> Dict[str, List[Dict[str, str]]]:
         """
         Retrieve schema definitions from the configuration.
+
         Returns:
             dict: A dictionary where keys are schema names and values are lists of schema definitions
         """
@@ -84,6 +87,7 @@ class ConfigManager:
     def get_examples(self) -> Dict[str, Dict[str, str]]:
         """
         Retrieve example data from the configuration.
+
         Returns:
             dict: A dictionary where keys are example names and values are dictionaries of example data
         """
@@ -93,6 +97,7 @@ class ConfigManager:
     def get_memory_params(self) -> Dict[str, str]:
         """
         Retrieve the memory settings from the configuration.
+
         Returns:
             str: The memory type
         """
@@ -102,6 +107,7 @@ class ConfigManager:
     def get_config_data(self) -> Dict:
         """
         Retrieve the complete configuration data.
+
         Returns:
             dict: The complete configuration data
         """

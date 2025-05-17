@@ -11,8 +11,9 @@ class PromptManager:
     def __init__(self, config: Optional[ConfigManager] = None):
         """
         Initialize the prompt manager.
+
         Args:
-            config (ConfigManager, optional): Pre-loaded settings from the configuration file
+            config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
         """
         self._params = config
         self._templates = {}
@@ -35,8 +36,10 @@ class PromptManager:
     def get_template(self, name: str = "default") -> Optional[ChatPromptTemplate]:
         """
         Get a pre-loaded template by name.
+
         Args:
-            name (str): Name of the template
+            name (`str`): Name of the template
+
         Returns:
             ChatPromptTemplate (optional): The template or None if not found
         """
@@ -55,8 +58,10 @@ class PromptManager:
     def create_template(self, template_string: str) -> ChatPromptTemplate:
         """
         Create a chat prompt template from a string.
+
         Args:
-            template_string (str): The template string with variables in {curly_braces}
+            template_string (`str`): The template string with variables in {curly_braces}
+
         Returns:
             ChatPromptTemplate: A ChatPromptTemplate object
         """
@@ -66,8 +71,10 @@ class PromptManager:
     def format_simple_text(self, prompt: str) -> List[HumanMessage]:
         """
         Format a prompt  as HumanMessage object.
+
         Args:
-            prompt (str): The prompt string
+            prompt (`str`): The prompt string
+
         Returns:
             list: Formatted prompt ready to send to the model
         """
@@ -77,8 +84,10 @@ class PromptManager:
     def format_list_of_texts(self, prompts: List[str]) -> List[HumanMessage]:
         """
         Format a list of prompts as HumanMessage object.
+
         Args:
-            prompts (list): The list of prompt strings with variables in {curly_braces}
+            prompts (`list`): The list of prompt strings with variables in {curly_braces}
+
         Returns:
             list: Formatted prompts ready to send to the model
         """
@@ -93,9 +102,11 @@ class PromptManager:
     ) -> List[HumanMessage]:
         """
         Format a template text  with expected values.
+
         Args:
-            template (ChatPromptTemplate): The prompt template
+            template (`ChatPromptTemplate`): The prompt template
             **kwargs: The values to fill into the template
+
         Returns:
             list: Formatted messages ready to send to the model
         """
@@ -105,8 +116,10 @@ class PromptManager:
     def formatter(self, prompt: Optional[Any], **kwargs) -> str:
         """
         Format the prompt based on its type.
+
         Args:
-            prompt (str | list | ChatPromptTemplate): The prompt to format
+            prompt (`str` or `list` or `ChatPromptTemplate`): The prompt to format
+
         Returns:
             str: The formatted prompt
         """

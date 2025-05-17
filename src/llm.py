@@ -9,8 +9,9 @@ class LLMClient:
     def __init__(self, config: Optional[ConfigManager] = None):
         """
         Initialize the LLM client.
+
         Args:
-            config (ConfigManager, optional): Pre-loaded settings from the configuration file
+            config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
         """
         self._params = config
         self._model = self._params.get_model_params.get("model")

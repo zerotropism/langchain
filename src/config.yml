@@ -81,6 +81,6 @@ schemas:
 
 # Memory settings for continuous conversation
 memory:
-  memory_type: "buffer"
-  window_size: 3
-  token_limit: 100
+  memory_type: "token" # available: 'buffer', 'window', 'token', 'summary'
+  window_size: 3 # for 'window' memory type
+  token_limit: 100 # for 'token' & 'summary' memory types
