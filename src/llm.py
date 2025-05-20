@@ -13,35 +13,68 @@ class LLMClient:
         Args:
             config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
         """
-        self._params = config
-        self._model = self._params.get_model_params.get("model")
-        self._temperature = self._params.get_model_params.get("temperature")
+        self._params = config.get_model_settings or ConfigManager().get_model_settings
+        self._model = self._params["model"]
+        self._temperature = self._params["temperature"]
+        self._top_k = self._params["top_k"]
+        self._top_p = self._params["top_p"]
+        self._context_length = self._params["context_length"]
         self._chat_instance = None
 
     @property
-    def what_model(self) -> str:
+    def get_model(self) -> str:
         """Get the model name."""
         return self._model
 
-    @what_model.setter
+    @get_model.setter
     def set_model(self, value: str):
         """Set the model name."""
         self._model = value
 
     @property
-    def what_temperature(self) -> float:
+    def get_temperature(self) -> float:
         """Get the temperature setting."""
         return self._temperature
 
-    @what_temperature.setter
+    @get_temperature.setter
     def set_temperature(self, value: float):
         """Set the temperature setting."""
         self._temperature = value
 
     @property
-    def what_params(self) -> ConfigManager:
+    def top_k(self) -> int:
+        """Get the top_k setting."""
+        return self._top_k
+
+    @top_k.setter
+    def set_top_k(self, value: int):
+        """Set the top_k setting."""
+        self._top_k = value
+
+    @property
+    def top_p(self) -> float:
+        """Get the top_p setting."""
+        return self._top_p
+
+    @top_p.setter
+    def set_top_p(self, value: float):
+        """Set the top_p setting."""
+        self._top_p = value
+
+    @property
+    def context_length(self) -> int:
+        """Get the context length setting."""
+        return self._context_length
+
+    @context_length.setter
+    def set_context_length(self, value: int):
+        """Set the context length setting."""
+        self._context_length = value
+
+    @property
+    def get_params(self) -> ConfigManager:
         """Get the model parameters."""
-        return self._params.get_model_params or {}
+        return self._params or {}
 
     def infer(
         self,
@@ -63,7 +96,9 @@ class LLMClient:
 
 
 class CustomTokenCountLLM(ChatOllama):
-    """Custom LLM class that overrides token counting methods."""
+    """Custom LLM class that overrides token counting methods.
+
+    This class is used to count tokens in a naive custom way, as the default."""
 
     def get_num_tokens(self, text: str) -> int:
         """Count tokens in a text string."""
