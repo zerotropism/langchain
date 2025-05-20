@@ -14,15 +14,18 @@ class OutputParser:
     def __init__(self, config: Optional[ConfigManager] = None):
         """
         Initialize the output parser.
-        Args:
-            config (ConfigManager, optional): Pre-loaded settings from `./config.yml` file
-        """
-        self.params = config
-        self._parsers = {}
 
-        # Preload parsers from config schemas
-        for schema_name, schema_def in self.params.get_schemas.items():
-            self._parsers[schema_name] = self.create_json_parser(schema_def)
+        Args:
+            config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
+        """
+        self.parse_settings = config.get_examples or ConfigManager().get_examples
+        self.parsers = {}
+
+        # Preload parsers from example schemas
+        for name, description in self.parse_settings["examples"]["extract"][
+            "schemas"
+        ].items():
+            self.parsers[name] = self.create_json_parser(description)
 
     @staticmethod
     @handle_exception
@@ -31,9 +34,11 @@ class OutputParser:
     ) -> StructuredOutputParser:
         """
         Create a parser for JSON-formatted outputs.
+
         Args:
-            schema_definitions (list): List of dictionaries containing schema definitions
+            schema_definitions (`list`): List of dictionaries containing schema definitions
             Each dict should have 'name' and 'description' keys
+
         Returns:
             StructuredOutputParser: A configured StructuredOutputParser
         """
@@ -48,8 +53,10 @@ class OutputParser:
     def get_format_instructions(parser: StructuredOutputParser) -> str:
         """
         Get formatting instructions for a given parser.
+
         Args:
-            parser (StructuredOutputParser): The parser to get instructions for
+            parser (`StructuredOutputParser`): The parser to get instructions for
+
         Returns:
             str: Formatting instructions as a string
         """
@@ -60,9 +67,11 @@ class OutputParser:
     def parse_output(parser: StructuredOutputParser, output: str) -> Dict[str, Any]:
         """
         Parse structured output from a model response.
+
         Args:
-            parser (StructuredOutputParser): The parser to use
-            output (str): The string output from the model
+            parser (`StructuredOutputParser`): The parser to use
+            output (`str`): The string output from the model
+
         Returns:
             dict: A dictionary containing the parsed data
         """
@@ -72,9 +81,11 @@ class OutputParser:
     def get_parser(self, name: str) -> Optional[StructuredOutputParser]:
         """
         Get a preloaded parser by name.
+
         Args:
-            name (str): Name of the parser/schema
+            name (`str`): Name of the parser/schema
+
         Returns:
             StructuredOutputParser (optional): The parser or None if not found
         """
-        return self._parsers.get(name)
+        return self.parsers.get(name)
