@@ -1,4 +1,4 @@
-from typing import List, Optional, Any
+from typing import List, Dict, Optional, Any
 from config import ConfigManager
 from decorators import handle_exception
 from langchain.prompts import ChatPromptTemplate
@@ -15,22 +15,12 @@ class PromptManager:
         Args:
             config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
         """
-        self._params = config
-        self._templates = {}
-
-        # Preload default template if available
-        if self._params._template:
-            self._templates["default"] = self.create_template(self._params._template)
-
-    @property
-    def what_params(self) -> ConfigManager:
-        """Get the model parameters."""
-        return self._params.get_model_params or {}
-
-    @property
-    def what_templates(self) -> dict:
-        """Get the available templates."""
-        return self._templates or self._params._template
+        self.prompt_settings = (
+            config.get_prompt_settings or ConfigManager().get_prompt_settings
+        )
+        self.system_prompt = self.prompt_settings["system"]
+        self.default_prompt = self.prompt_settings["one_shot"]
+        self.templates = self.prompt_settings["templates"]
 
     @handle_exception
     def get_template(self, name: str = "default") -> Optional[ChatPromptTemplate]:
@@ -43,16 +33,16 @@ class PromptManager:
         Returns:
             ChatPromptTemplate (optional): The template or None if not found
         """
-        if name not in self._templates:
-            if self._templates:
+        if name not in self.templates:
+            if self.templates:
                 print(
                     f"Template '{name}' not found. Returning the list of available templates:"
                 )
-                print(list(self._templates.keys()))
+                print(list(self.templates.keys()))
                 return None
             print("No templates available.")
             return None
-        return self._templates.get(name)
+        return self.templates.get(name)
 
     @handle_exception
     def create_template(self, template_string: str) -> ChatPromptTemplate:
@@ -124,7 +114,7 @@ class PromptManager:
             str: The formatted prompt
         """
         if not prompt:
-            return self.format_simple_text(self._params._prompt)
+            return self.format_simple_text(self.default_prompt)
         elif isinstance(prompt, str):
             return self.format_simple_text(prompt)
         elif isinstance(prompt, list):
