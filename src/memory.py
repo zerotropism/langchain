@@ -1,6 +1,8 @@
 from typing import Dict, List, Optional, Any, Union
 from abc import ABC, abstractmethod
+from config import ConfigManager
 from llm import LLMClient
+from decorators import handle_exception
 
 from langchain.memory import (
     ConversationBufferMemory,
@@ -57,7 +59,11 @@ class BaseMemoryManager(ABC):
 
 
 class BufferMemoryManager(BaseMemoryManager):
-    """Manager for `ConversationBufferMemory`."""
+    """Manager for `ConversationBufferMemory`.
+
+    Simply stores the conversation history without any additional processing.
+    Might be unfit  when the conversation history is bigger than the  model context
+    window."""
 
     def _create_memory(self) -> ConversationBufferMemory:
         return ConversationBufferMemory()
@@ -68,7 +74,8 @@ class BufferMemoryManager(BaseMemoryManager):
 
 
 class WindowMemoryManager(BaseMemoryManager):
-    """Manager for `ConversationBufferWindowMemory` with custom window size."""
+    """Manager for `ConversationBufferWindowMemory` with custom number of conversation
+    exchanges between the AI and the user."""
 
     def __init__(self, llm: BaseLLM, window_size: int = 1, verbose: bool = False):
         """
@@ -93,7 +100,8 @@ class WindowMemoryManager(BaseMemoryManager):
 
 
 class TokenMemoryManager(BaseMemoryManager):
-    """Manager for `ConversationTokenBufferMemory` with custom tokenization."""
+    """Manager for `ConversationTokenBufferMemory` with custom sliding number of tokens
+    to be remembered by the model."""
 
     def __init__(self, llm: BaseLLM, max_token_limit: int = 100, verbose: bool = False):
         """
@@ -114,14 +122,18 @@ class TokenMemoryManager(BaseMemoryManager):
 
 
 class SummaryMemoryManager(BaseMemoryManager):
-    """Manager for `ConversationSummaryBufferMemory`"""
+    """Manager for `ConversationSummaryBufferMemory` providing:
+    - a summary of the conversation
+    - the last few exchanges
+    under the constraint of a default max 2000 tokens."""
 
     def __init__(self, llm: BaseLLM, max_token_limit: int = 100, verbose: bool = False):
         """
         Initialize with a token limit for summarization.
 
         Args:
-            llm (`BaseLLM`)): The language model to use for summarization, not customizable for now
+            llm (`BaseLLM`)): The language model to use for summarization,
+                              not customizable for now
             max_token_limit (`int`): Maximum number of tokens before summarizing
             verbose (`bool`): Whether to print verbose output
         """
@@ -137,10 +149,26 @@ class SummaryMemoryManager(BaseMemoryManager):
 class MemoryFactory:
     """Factory class to create appropriate memory managers."""
 
-    @staticmethod
-    def create_memory_manager(
+    def __init__(self, config: Optional[ConfigManager] = None):
+        """
+        Initialize the memory factory.
+
+        Args:
+            config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
+        """
+        self.memory_settings = (
+            config.get_memory_settings or ConfigManager().get_memory_settings
+        )
+        self.memory_type = self.memory_settings.get("type", "buffer").lower()
+        self.windows_size = self.memory_settings.get("window_size", 3)
+        self.max_token_limit = self.memory_settings.get("max_token_limit", 100)
+        self.verbose = self.memory_settings.get("verbose", False)
+
+    @handle_exception
+    def build(
+        self,
         llm: LLMClient,
-        memory_type: Optional[str] = "buffer",
+        custom_memory: Optional[str] = None,
         **kwargs,
     ) -> BaseMemoryManager:
         """
@@ -148,32 +176,33 @@ class MemoryFactory:
 
         Args:
             llm (`LLMClient`): The language model client to use
-            memory_type (`str`, optional): Type of memory to create (`buffer`, `window`, `token`, `summary`), defaults to `buffer`
-            **kwargs: Additional arguments for specific memory types (`window_size`, `max_token_limit`, `verbose`)
+            custom_memory (`str`, optional): Type of memory to create
+                (available: `buffer`, `window`, `token`, `summary`), defaults to `buffer`
+            **kwargs: Additional arguments for specific memory types
+                (available: `window_size`, `max_token_limit`, `verbose`)
 
         Returns:
             An appropriate memory manager instance
         """
+        # Check for custom settings, defaults on config value
+        memory = custom_memory or self.memory_type
+        window_size = kwargs.get("window_size", self.windows_size)
+        max_token_limit = kwargs.get("max_token_limit", self.max_token_limit)
+        verbose = kwargs.get("verbose", self.verbose)
+
         # Create the appropriate LLM
         llm = llm.infer(
-            custom_token_count=True if memory_type in ["token", "summary"] else False,
+            custom_token_count=(True if memory in ["token", "summary"] else False),
         )
 
         # Create the appropriate memory manager
-        if memory_type == "buffer":
+        if memory == "buffer":
             return BufferMemoryManager(llm, **kwargs)
-        elif memory_type == "window":
-            window_size = kwargs.get("window_size", 1)
-            return WindowMemoryManager(llm, window_size, **kwargs.get("verbose", False))
-        elif memory_type == "token":
-            max_token_limit = kwargs.get("max_token_limit", 100)
-            return TokenMemoryManager(
-                llm, max_token_limit, **kwargs.get("verbose", False)
-            )
-        elif memory_type == "summary":
-            max_token_limit = kwargs.get("max_token_limit", 100)
-            return SummaryMemoryManager(
-                llm, max_token_limit, **kwargs.get("verbose", False)
-            )
+        elif memory == "window":
+            return WindowMemoryManager(llm, window_size, verbose)
+        elif memory == "token":
+            return TokenMemoryManager(llm, max_token_limit, verbose)
+        elif memory == "summary":
+            return SummaryMemoryManager(llm, max_token_limit, verbose)
         else:
-            raise ValueError(f"Unknown memory type: {memory_type}")
+            raise ValueError(f"Unknown memory type: {memory}")
