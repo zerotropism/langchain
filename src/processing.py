@@ -19,10 +19,10 @@ class TextProcessor:
         """
         self.config = config or ConfigManager()
 
-        self.memory_settings = self.config.get_memory_settings
-        self.prompt_settings = self.config.get_prompt_settings
-        self.prompt_templates = self.prompt_settings["templates"]
-        self.resources = self.config.get_examples
+        # self.memory_settings = self.config.get_memory_settings
+        # self.prompt_settings = self.config.get_prompt_settings
+        # self.prompt_templates = self.prompt_settings["templates"]
+        # self.resources = self.config.get_examples
 
         self.llm_client = LLMClient(self.config)
         self.prompt_manager = PromptManager(self.config)
