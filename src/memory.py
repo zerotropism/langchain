@@ -157,10 +157,10 @@ class MemoryFactory:
             config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
         """
         self.memory_settings = (
-            config.get_memory_settings or ConfigManager().get_memory_settings
+            config.get("memory") if config else ConfigManager().get("memory")
         )
         self.memory_type = self.memory_settings.get("type", "buffer").lower()
-        self.windows_size = self.memory_settings.get("window_size", 3)
+        self.window_size = self.memory_settings.get("window_size", 3)
         self.max_token_limit = self.memory_settings.get("max_token_limit", 100)
         self.verbose = self.memory_settings.get("verbose", False)
 
@@ -186,7 +186,7 @@ class MemoryFactory:
         """
         # Check for custom settings, defaults on config value
         memory = custom_memory or self.memory_type
-        window_size = kwargs.get("window_size", self.windows_size)
+        window_size = kwargs.get("window_size", self.window_size)
         max_token_limit = kwargs.get("max_token_limit", self.max_token_limit)
         verbose = kwargs.get("verbose", self.verbose)
 
