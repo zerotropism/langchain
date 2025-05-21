@@ -28,7 +28,7 @@ class PromptManager:
     def get_template(self, name: str = "default") -> ChatPromptTemplate:
         """
         Retrieve a prompt template by name
-        and return it as a ChatPromptTemplate object.
+        and return it as a LLM-ready ChatPromptTemplate object.
         Args:
             name (`str`): Name of the template
         """
