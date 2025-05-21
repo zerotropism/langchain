@@ -1,7 +1,3 @@
-"""
-LangChain LLM Structured output parsing (OutputParser) integration
-"""
-
 from typing import Dict, List, Optional, Any
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
 from config import ConfigManager
@@ -20,12 +16,13 @@ class OutputParser:
         """
         self.parse_settings = config.get_examples or ConfigManager().get_examples
         self.parsers = {}
-
-        # Preload parsers from example schemas
-        for name, description in self.parse_settings["examples"]["extract"][
-            "schemas"
-        ].items():
-            self.parsers[name] = self.create_json_parser(description)
+        for task, content in self.parse_settings.items():
+            schemas = content.get("schemas", [])
+            if schemas:
+                self.parsers[task] = {}
+                for schema in schemas:
+                    name = schema["name"]
+                    self.parsers[task][name] = self.create_json_parser([schema])
 
     @staticmethod
     @handle_exception
@@ -35,12 +32,10 @@ class OutputParser:
         """
         Create a parser for JSON-formatted outputs.
 
+        Take a list of schema definitions and return a StructuredOutputParser object.
         Args:
             schema_definitions (`list`): List of dictionaries containing schema definitions
             Each dict should have 'name' and 'description' keys
-
-        Returns:
-            StructuredOutputParser: A configured StructuredOutputParser
         """
         schemas = [
             ResponseSchema(name=schema["name"], description=schema["description"])
@@ -54,11 +49,9 @@ class OutputParser:
         """
         Get formatting instructions for a given parser.
 
+        Take a parser and return its formatting instructions as a string.
         Args:
-            parser (`StructuredOutputParser`): The parser to get instructions for
-
-        Returns:
-            str: Formatting instructions as a string
+            parser (`StructuredOutputParser`): The parser to get instructions from
         """
         return parser.get_format_instructions()
 
@@ -68,12 +61,10 @@ class OutputParser:
         """
         Parse structured output from a model response.
 
+        Take a parser and a string output from the model, and return a dictionary
         Args:
             parser (`StructuredOutputParser`): The parser to use
             output (`str`): The string output from the model
-
-        Returns:
-            dict: A dictionary containing the parsed data
         """
         return parser.parse(output)
 
@@ -82,10 +73,8 @@ class OutputParser:
         """
         Get a preloaded parser by name.
 
+        Take a name and return the corresponding parser if it exists.
         Args:
             name (`str`): Name of the parser/schema
-
-        Returns:
-            StructuredOutputParser (optional): The parser or None if not found
         """
         return self.parsers.get(name)
