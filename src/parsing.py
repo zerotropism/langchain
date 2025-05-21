@@ -14,15 +14,13 @@ class OutputParser:
         Args:
             config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
         """
-        self.parse_settings = config.get_examples or ConfigManager().get_examples
+        self.schemas = (
+            config.get("schemas") if config else ConfigManager().get("schemas")
+        )
         self.parsers = {}
-        for task, content in self.parse_settings.items():
-            schemas = content.get("schemas", [])
-            if schemas:
-                self.parsers[task] = {}
-                for schema in schemas:
-                    name = schema["name"]
-                    self.parsers[task][name] = self.create_json_parser([schema])
+        for schema_name, schema_definitions in self.schemas.items():
+            # Each schema definition should be a list of dictionaries
+            self.parsers[schema_name] = self.create_json_parser(schema_definitions)
 
     @staticmethod
     @handle_exception
