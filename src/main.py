@@ -2,9 +2,7 @@ import os
 import yaml
 from typing import Dict
 from config import ConfigManager
-from llm import LLMClient
 from processing import TextProcessor
-from memory import MemoryFactory
 
 
 def mode_selector():
@@ -26,11 +24,9 @@ Input your choice:
 def load_configurations(path: str = "src/config.yml") -> Dict:
     """Load configuration from a YAML file.
 
+    Take a filepath string and return a dictionary with the configuration settings.
     Args:
-        path (str, optional): path to the YAML file, defaults to "config.yml"
-
-    Returns:
-        Dict: configurations as a dictionary
+        path (`str`, optional): path to the YAML file, defaults to "config.yml"
     """
     try:
         with open(path, "r") as file:
@@ -41,12 +37,13 @@ def load_configurations(path: str = "src/config.yml") -> Dict:
 
 
 def prompt(conf: ConfigManager):
-    """Prompt mode.
+    """Prompt mode, simplest way to interact with the LLM.
 
+    Generate text based on a template you can build.
     Args:
-        conf (ConfigManager): configurations to pass to the function
+        conf (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
     """
-    # The processor is in charge of one-shot generation tasks
+    # The processor is a high-level interface for common text processing tasks including one-shot prompting
     processor = TextProcessor(conf)
 
     # Get a simple completion
@@ -67,62 +64,17 @@ def prompt(conf: ConfigManager):
 
 
 def chat(conf: ConfigManager):
-    """Chat mode allowing
+    """Chat mode, continuous conversation with the LLM.
 
+    Generate memomry-based contextualized responses to user queries.
     Args:
-        conf (ConfigManager): configurations to pass to the function
+        conf (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
     """
+    # The processor is a high-level interface for common text processing tasks including one-shot prompting
     processor = TextProcessor(conf)
     processor.chat()
 
-    # # Create a buffer memory manager
-    # # buffer_memory = MemoryFactory.create_memory_manager("buffer", verbose=True)
-    # buffer_memory = MemoryFactory.create_memory_manager(conf, verbose=True)
-
-    # # Demonstration of buffer memory
-    # buffer_memory.predict("Hi, my name is Philantenne!")
-    # buffer_memory.predict("What is 1+1?")
-    # response = buffer_memory.predict("What is my name?")
-    # print(f"Response: {response}")
-    # print(f"Memory: {buffer_memory.get_memory_content()}")
-
-    # # Create a window memory manager with window size 2
-    # # window_memory = MemoryFactory.create_memory_manager("window", window_size=2)
-    # window_memory = MemoryFactory.create_memory_manager("window", window_size=2)
-
-    # # Demonstration of window memory
-    # window_memory.predict("Hi, my name is Philantenne!")
-    # window_memory.predict("What is 1+1?")
-    # window_memory.predict("What is my name?")
-    # print(f"Window Memory: {window_memory.get_memory_content()}")
-
-    # # Create a token memory manager
-    # token_memory = MemoryFactory.create_memory_manager("token", max_token_limit=50)
-
-    # # Manually add context to token memory
-    # token_memory.add_to_memory("AI is what?!", "Amazing!")
-    # token_memory.add_to_memory("Backpropagation is what?", "Beautiful!")
-    # token_memory.add_to_memory("Chatbots are what?", "Charming!")
-    # print(f"Token Memory: {token_memory.get_memory_content()}")
-
-    # # Create a summary memory manager
-    # summary_memory = MemoryFactory.create_memory_manager("summary", max_token_limit=100)
-
-    # # Add a long schedule to summary memory
-    # schedule = """There is a meeting at 8am with your product team.
-    # You will need your powerpoint presentation prepared.
-    # 9am-12pm have time to work on your LangChain project which will go quickly
-    # because Langchain is such a powerful tool. At Noon, lunch at the italian
-    # restaurant with a customer who is driving from over an hour away to meet
-    # you to understand the latest in AI. Be sure to bring your laptop to show
-    # the latest LLM demo."""
-
-    # summary_memory.add_to_memory("What is on the schedule today?", schedule)
-    # print(f"Summary Memory: {summary_memory.get_memory_content()}")
-
-    # response = summary_memory.predict("What would be a good demo to show?")
-    # print(f"Response about demo: {response}")
-    # pass
+    return
 
 
 def rag(conf: ConfigManager):
@@ -147,21 +99,20 @@ def run_mode(mode: str, conf: ConfigManager):
     """Run the specified mode.
 
     Args:
-        mode (str): mode as a function name to run
-        conf (ConfigManager): configuration settings from `./config.yml` file
+        mode (`str`): mode as a function name to run
+        conf (`ConfigManager`): configuration settings from `./config.yml` file
     """
-    try:
-        # Get the function corresponding to the mode
-        function = globals().get(mode)
-        if callable(function):
-            # Call the function with the configurations
-            function(conf)
-    except KeyError:
+    # Get the function corresponding to the mode
+    function = globals().get(mode)
+    if callable(function):
+        # Call the function with the configurations
+        function(conf)
+    else:
         print(f"'{mode}' has no implemented function.")
 
 
 def main():
-    mode = mode_selector()
+    mode = mode_selector().strip().lower()
 
     # Raise an error if mode is not valid
     if not mode:
