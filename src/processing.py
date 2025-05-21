@@ -17,21 +17,28 @@ class TextProcessor:
         Args:
             config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
         """
-        self._params = config
-        self.llm_client = LLMClient(self._params)
-        self.prompt_manager = PromptManager(self._params)
-        self.output_parser = OutputParser(self._params)
+        self.config = config or ConfigManager()
+
+        self.memory_settings = self.config.get_memory_settings
+        self.prompt_settings = self.config.get_prompt_settings
+        self.prompt_templates = self.prompt_settings["templates"]
+        self.resources = self.config.get_examples
+
+        self.llm_client = LLMClient(self.config)
+        self.prompt_manager = PromptManager(self.config)
+        self.output_parser = OutputParser(self.config)
+        self.memory_manager = MemoryFactory(self.config)
 
     @handle_exception
     @timing_decorator
     def generate(self, prompt: Optional[Any] = None, **kwargs) -> str:
         """
-        Generate text based on a prompt.
-
-        This method uses the LLMClient to send a prompt to the model and receive a response.
+        Generate text based on a prompt. LLMClient class to send a prompt to, and return
+        a response from, the model.
 
         Args:
-            prompt: The text prompt.s to send to the model, defaults to config.prompt if None
+            prompt: The text prompt to send to the model, defaults to one_shot example
+                from config file  if None
             **kwargs: Additional keyword arguments to pass to the prompt manager
 
         Returns:
@@ -45,25 +52,28 @@ class TextProcessor:
     @handle_exception
     @timing_decorator
     def chat(
-        self, memory_type: Optional[str] = "buffer", verbose: bool = False
+        self,
+        memory: Optional[str] = None,
+        verbose: bool = False,
     ) -> None:
         """
         Start a memory-capable chat instance.
 
+        Args:
+            memory_type (`str`, optional): Type of memory manager to use,
+                defaults to "buffer"
+            verbose (`bool`, optional): Whether to print detailed information,
+                defaults to False
         """
-        # Check if memory type is passed, otherwise use the default from configuration
-        memory_type = (
-            memory_type.lower()
-            if memory_type
-            else self._params.get("memory", {}).get("memory_type", "buffer")
-        )
+        # Check if memory type is passed, otherwise use default from memory settings
+        memory_type = memory.lower() if memory else self.memory_manager.get_memory_type
 
         # Create the appropriate memory manager
-        chatbot = MemoryFactory.create_memory_manager(
+        chatbot = self.memory_manager.build(
             self.llm_client, memory_type, verbose=verbose
         )
         print(
-            f"You can now start chatting with the model '{self._params._model}'.\
+            f"You can now start chatting with the model '{self.config.get_model}'.\
             Type 'exit' to quit.\n"
         )
 
@@ -83,21 +93,30 @@ class TextProcessor:
         Translate text to a different style.
 
         Args:
-            text (`str`, optional): The text to translate, defaults to config.source if None
-            style (`str`, optional): The target style description, defaults to config.style if None
+            text (`str`, optional): The text to translate, defaults to translate source
+              example from config file if None
+            style (`str`, optional): The target style description, defaults to translate
+                style example from config file if None
 
         Returns:
             str: Translated text
         """
-        text = text or self._params._source
-        style = style or self._params._style
-
-        template = self.prompt_manager.get_template() or self.prompt_manager.create_template(
-            """Translate the text that is delimited by triple backticks 
-            into a style that is {style}.
-            text: ```{text}```
-            """
+        # Get prompt settings ie. source text, style to use and assignment template
+        text = text or self.prompt_manager.get_resource("translate", "pirate", "source")
+        style = style or self.prompt_manager.get_resource(
+            "translate", "pirate", "style"
         )
+
+        if "translate" in self.prompt_manager.get_templates:
+            template = self.prompt_manager.get_template("translate")
+        else:
+            template = self.prompt_manager.get_template("default")
+            if not template:
+                raise ValueError(
+                    "Template 'translate' not found. Please check your configuration."
+                )
+
+        # Format messages with gathering prompt settings
         messages = self.prompt_manager.formatter(template, style=style, text=text)
         return self.generate(messages)
 
@@ -107,52 +126,46 @@ class TextProcessor:
         self, text: Optional[str] = None, schema_name: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Extract structured information from text using configured schemas.
+        Extract structured information by following schematic instructions.
 
+        Take a target text and a schema name, and return a dictionary with the extracted
+        information.
         Args:
-            text (`str`, optional): The text to analyze, defaults to config.source if None
-            schema_name (`str`, optional): Name of the schema to use, defaults to config.schema_name if None
-
-        Returns:
-            dict: Dictionary with extracted information
+            text (`str`, optional): The text to analyze,
+                defaults to config.source if None
+            schema_name (`str`, optional): Name of the schema to use,
+                defaults to config.schema_name if None
         """
-        # Check if text is passed, otherwise use the default example from configuration
-        if not text:
-            print(
-                "You did not provide any text to extract from, defaulting to example text."
-            )
-            text = self._params.get_examples.get("product_review", {}).get("source", "")
-            if not text:
-                print(
-                    "Error: default example 'product_review' text not found, please check configuration."
-                )
-                return
-
-        # Check if a schema has been passed, otherwise use the default schema from configuration
-        schema_to_use = schema_name or self._params._schema_name
-        parser = self.output_parser.get_parser(schema_to_use)
+        # Get prompt settings ie. source text, schema to use and assignment template
+        example = self.prompt_manager.get_example(
+            "extract", schema_name or "product_review"
+        )
+        text = text or example["source"]
+        schema_name = schema_name or example["schema"]
+        schema = self.prompt_manager.get_schema(schema_name)
+        parser = self.output_parser.get_parser(schema)
 
         if not parser:
-            raise ValueError(f"Schema '{schema_to_use}' not found in configuration")
+            raise ValueError(f"Schema '{schema}' not found in configuration")
 
         format_instructions = self.output_parser.get_format_instructions(parser)
 
-        # Check if template is passed, otherwise use the default template from configuration
-        template_str = (
-            self._params._schema_template
-            or """For the following text, extract the following information:
+        # Get template if raw string provided or create a default one on the fly
+        template = self.prompt_manager.get_template(
+            "extract"
+        ) or self.prompt_manager.create_template(
+            """For the following text, extract the following information:
             {format_instructions}
             
             text: {text}
             """
         )
-        template = self.prompt_manager.create_template(template_str)
 
-        # Format prompt with text to extract from and the instructions from the schema and template
+        # Format prompt with target text and instructions
         messages = self.prompt_manager.formatter(
             template, text=text, format_instructions=format_instructions
         )
 
-        # Generate response using the LLM
+        # Get response from LLM
         response = self.generate(messages)
         return self.output_parser.parse_output(parser, response)
