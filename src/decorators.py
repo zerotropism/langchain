@@ -7,7 +7,7 @@ from typing import Any, Callable, TypeVar, cast
 
 # Logger configuration
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.ERROR,
     format="%(asctime)s - %(levelname)s - %(name)s - %(filename)s - %(funcName)s - %(lineno)d - %(message)s : ",
     handlers=[
         logging.StreamHandler(sys.stdout),
