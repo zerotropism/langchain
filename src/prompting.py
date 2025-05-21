@@ -11,6 +11,8 @@ class PromptManager:
     def __init__(self, config: ConfigManager):
         self.config = config
         self.templates = config.get("prompts")
+        self.examples = config.get("examples")
+        self.schemas = config.get("schemas")
 
     @handle_exception
     def create_template(self, template_string: str) -> ChatPromptTemplate:
@@ -40,6 +42,37 @@ class PromptManager:
             print("No templates available.")
             return None
         return self.create_template(self.templates.get(name))
+
+    @handle_exception
+    def get_example(self, task: str, name: str):
+        """
+        Retrieve an example by task and name.
+        Args:
+            task (`str`): The task name
+            name (`str`): The example name
+        """
+        for example in self.examples.get(task, []):
+            if example.get("name") == name:
+                return example
+        return None
+
+    @handle_exception
+    def get_schema(self, name: str):
+        """
+        Retrieve a schema by name.
+        Args:
+            name (`str`): The schema name
+        """
+        if name not in self.schemas:
+            if self.schemas:
+                print(
+                    f"Schema '{name}' not found. Returning the list of available schemas:"
+                )
+                print(list(self.schemas.keys()))
+                return None
+            print("No schemas available.")
+            return None
+        return self.schemas.get(name)
 
     @handle_exception
     def format_simple_text(self, prompt: str) -> List[HumanMessage]:
