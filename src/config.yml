@@ -1,86 +1,91 @@
-# Default values
-defaults:
-  model: "gemma3:12b"
+# Default setting values for
+
+# LLM overall
+model:
+  name: "llama3.2"
   temperature: 0.0
-  memory: "buffer"
-  prompt: "What is 1+1?"
-  template: >
-    Translate the text
-    that is delimited by triple backticks 
-    into a style that is {style}. Do not add any explainations or
+  top_k: 64
+  top_p: 0.95
+  context_length: 32000
+
+# Continuous conversation memory
+memory:
+  type: "buffer" # available: 'buffer', 'window', 'token', 'summary'
+  window_size: 3 # for 'window' memory type
+  max_token_limit: 100 # for 'token' & 'summary' memory types
+  verbose: False
+
+# Prompting overall
+prompts:
+  one_shot: "what is 1+1?"
+  system: >
+    You are a helpful assistant that remembers the context of the conversation.
+    Your task is to follow instructions by using context and provide relevant and 
+    accurate responses. Be concise and to the point.  Be illustrative and use examples,
+    although synthetic, when needed.
+  default: >
+    Translate the text that is delimited by triple backticks 
+    into a style that is {style}.
+    text: ```{text}```
+  translate: >
+    Translate the text that is delimited by triple backticks 
+    into a style that is {style}. Do not add any explanations or
     additional information. Just return the translated text.
     text: ```{text}```
-  source: |
-    Arrr, I be fuming that me blender lid
-    flew off and splattered me kitchen walls
-    with smoothie! And to make matters worse,
-    the warranty don't cover the cost of
-    cleaning up me kitchen. I need yer help
-    right now, matey!
-  style: "American English in a calm and respectful tone"
-  schema_name: "product_review"
-  schema_template: >
+  extract: >
     For the following text, extract the following information:
     {format_instructions}
-    
     text: {text}
 
-# Example definitions for reuse
+# Example applications
 examples:
-  pirate_complaint:
-    source: |
-      Arrr, I be fuming that me blender lid
-      flew off and splattered me kitchen walls
-      with smoothie! And to make matters worse,
-      the warranty don't cover the cost of
-      cleaning up me kitchen. I need yer help
-      right now, matey!
-    style: "American English in a calm and respectful tone"
-  
-  rude_response:
-    source: |
-      Hey there customer,
-      the warranty does not cover
-      cleaning expenses for your kitchen
-      because it's your fault that
-      you misused your blender
-      by forgetting to put the lid on before
-      starting the blender.
-      Tough luck! See ya!
-    style: "a polite tone that speaks in English Pirate"
-  
-  product_review:
-    source: |
-      This leaf blower is pretty amazing. It has four settings:
-      candle blower, gentle breeze, windy city, and tornado.
-      It arrived in two days, just in time for my wife's
-      anniversary present.
-      I think my wife liked it so much she was speechless.
-      So far I've been the only one using it, and I've been
-      using it every other morning to clear the leaves on our lawn.
-      It's slightly more expensive than the other leaf blowers
-      out there, but I think it's worth it for the extra features.
+  translate:
+    - name: "pirate"
+      source: |
+        Arrr, I be fuming that me blender lid
+        flew off and splattered me kitchen walls
+        with smoothie! And to make matters worse,
+        the warranty don't cover the cost of
+        cleaning up me kitchen. I need yer help
+        right now, matey!
+      style: "American English in a calm and respectful tone"
+    - name: "customer"
+      source: |
+        Hey there customer,
+        the warranty does not cover
+        cleaning expenses for your kitchen
+        because it's your fault that
+        you misused your blender
+        by forgetting to put the lid on before
+        starting the blender.
+        Tough luck! See ya!
+      style: "a polite tone that speaks in English Pirate"
+  extract:
+    - name: "product_review"
+      source: |
+        This leaf blower is pretty amazing. It has four settings:
+        candle blower, gentle breeze, windy city, and tornado.
+        It arrived in two days, just in time for my wife's
+        anniversary present.
+        I think my wife liked it so much she was speechless.
+        So far I've been the only one using it, and I've been
+        using it every other morning to clear the leaves on our lawn.
+        It's slightly more expensive than the other leaf blowers
+        out there, but I think it's worth it for the extra features.
+      schema: "product_review"
 
-# Schema definitions for structured output parsing
+# Schemas defintion for extraction and other specific tasks
 schemas:
   product_review:
     - name: "gift"
       description: >
         Was the item purchased as a gift for someone else?
         Answer True if yes, False if not or unknown.
-    
     - name: "delivery_days"
       description: >
         How many days did it take for the product
         to arrive? If this information is not found, output -1.
-    
     - name: "price_value"
       description: >
         Extract any sentences about the value or price,
         and output them as a comma separated Python list.
-
-# Memory settings for continuous conversation
-memory:
-  memory_type: "token" # available: 'buffer', 'window', 'token', 'summary'
-  window_size: 3 # for 'window' memory type
-  token_limit: 100 # for 'token' & 'summary' memory types
