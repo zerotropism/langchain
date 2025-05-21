@@ -11,8 +11,6 @@ class PromptManager:
     def __init__(self, config: ConfigManager):
         self.config = config
         self.templates = config.get("prompts")
-        self.examples = config.get("examples")
-        self.schemas = config.get("schemas")
 
     @handle_exception
     def create_template(self, template_string: str) -> ChatPromptTemplate:
@@ -104,57 +102,3 @@ class PromptManager:
             raise ValueError(
                 "Unsupported prompt type. Must be str, list, or ChatPromptTemplate object."
             )
-
-    # class PromptManager:
-    #     """Manager for creating and formatting prompt templates."""
-
-    #     def __init__(self, config: Optional[ConfigManager] = None):
-    #         """
-    #         Initialize the prompt manager.
-
-    #         Args:
-    #             config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
-    #         """
-    #         self.prompt_settings = (
-    #             config.get_prompt_settings or ConfigManager().get_prompt_settings
-    #         )
-    #         self.system_prompt = self.prompt_settings["system"]
-    #         self.default_prompt = self.prompt_settings["one_shot"]
-    #         self.templates = self.prompt_settings["templates"]
-
-    #         self.resources = config.get_examples or ConfigManager().get_examples
-
-    #     @property
-    #     def get_system_prompt(self) -> str:
-    #         """Retrieve the system prompt from the configuration."""
-    #         return self.system_prompt
-
-    #     @get_system_prompt.setter
-    #     def set_system_prompt(self, value: str):
-    #         """Set the system prompt in the configuration."""
-    #         self.system_prompt = value
-
-    #     @property
-    #     def get_default_prompt(self) -> str:
-    #         """Retrieve the default prompt from the configuration."""
-    #         return self.default_prompt
-
-    #     @property
-    #     def get_templates(self) -> Dict[str, str]:
-    #         """Retrieve the templates from the configuration."""
-    #         return self.templates
-
-    # @handle_exception
-    # def get_resource(self, *args) -> Dict[str, str]:
-    #     """Retrieve specific resource from the examples loaded in the configuration."""
-    #     resources = self.resources
-    #     for arg in args:
-    #         resources = resources[arg] if arg in resources else None
-    #         if resources is None:
-    #             print(f"Resource '{arg}' not found.")
-    #             return None
-    #     return resources
-
-    # def get_resource2(self, task: str):
-    #     # Direct access to the examples
-    #     return self.params.config_data["examples"][task]
