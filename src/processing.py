@@ -51,70 +51,33 @@ class TextProcessor:
 
     @handle_exception
     @timing_decorator
-    def chat(
+    def translate(
         self,
-        memory: Optional[str] = None,
-        verbose: bool = False,
-    ) -> None:
-        """
-        Start a memory-capable chat instance.
-
-        Args:
-            memory_type (`str`, optional): Type of memory manager to use,
-                defaults to "buffer"
-            verbose (`bool`, optional): Whether to print detailed information,
-                defaults to False
-        """
-        # Check if memory type is passed, otherwise use default from memory settings
-        memory_type = memory.lower() if memory else self.memory_manager.get_memory_type
-
-        # Create the appropriate memory manager
-        chatbot = self.memory_manager.build(
-            self.llm_client, memory_type, verbose=verbose
-        )
-        print(
-            f"You can now start chatting with the model '{self.config.get_model}'.\
-            Type 'exit' to quit.\n"
-        )
-
-        # Start the chat loop
-        while True:
-            user_input = input("You: ")
-            if user_input.lower() == "exit":
-                break
-            response = chatbot.predict(user_input)
-            print(f"AI: {response}")
-            chatbot.add_to_memory(user_input, response)
-
-    @handle_exception
-    @timing_decorator
-    def translate(self, text: Optional[str] = None, style: Optional[str] = None) -> str:
+        usecase: Optional[str] = None,
+        text: Optional[str] = None,
+        style: Optional[str] = None,
+    ) -> str:
         """
         Translate text to a different style.
 
+        Take a usecase name from config file or a custom text and style to translate.
         Args:
-            text (`str`, optional): The text to translate, defaults to translate source
-              example from config file if None
-            style (`str`, optional): The target style description, defaults to translate
-                style example from config file if None
-
-        Returns:
-            str: Translated text
+            usecase (`str`, optional): The use case to translate, defaults to
+                translate example from config file if None
+            text (`str`, optional): The text to translate, defaults to
+                config.source if None
+            style (`str`, optional): The style to use for translation,
+                defaults to config.style if None
         """
         # Get prompt settings ie. source text, style to use and assignment template
-        text = text or self.prompt_manager.get_resource("translate", "pirate", "source")
-        style = style or self.prompt_manager.get_resource(
-            "translate", "pirate", "style"
-        )
+        example = self.prompt_manager.get_example("translate", usecase or "pirate")
+        text = example["source"] or text
+        style = example["style"] or style
 
-        if "translate" in self.prompt_manager.get_templates:
-            template = self.prompt_manager.get_template("translate")
-        else:
-            template = self.prompt_manager.get_template("default")
-            if not template:
-                raise ValueError(
-                    "Template 'translate' not found. Please check your configuration."
-                )
+        # Get template if raw string provided in config file or create a default one on the fly
+        template = self.prompt_manager.get_template(
+            "translate"
+        ) or self.prompt_manager.get_template("default")
 
         # Format messages with gathering prompt settings
         messages = self.prompt_manager.formatter(template, style=style, text=text)
@@ -150,7 +113,7 @@ class TextProcessor:
 
         format_instructions = self.output_parser.get_format_instructions(parser)
 
-        # Get template if raw string provided or create a default one on the fly
+        # Get template if raw string provided in config file or create a default one on the fly
         template = self.prompt_manager.get_template(
             "extract"
         ) or self.prompt_manager.create_template(
@@ -169,3 +132,40 @@ class TextProcessor:
         # Get response from LLM
         response = self.generate(messages)
         return self.output_parser.parse_output(parser, response)
+
+    @handle_exception
+    @timing_decorator
+    def chat(
+        self,
+        memory: Optional[str] = None,
+        verbose: bool = False,
+    ) -> None:
+        """
+        Start a memory-capable chat instance.
+
+        Args:
+            memory_type (`str`, optional): Type of memory manager to use,
+                defaults to "buffer"
+            verbose (`bool`, optional): Whether to print detailed information,
+                defaults to False
+        """
+        # Check if memory type is passed, otherwise use default from memory settings
+        memory_type = memory.lower() if memory else self.memory_manager.get_memory_type
+
+        # Create the appropriate memory manager
+        chatbot = self.memory_manager.build(
+            self.llm_client, memory_type, verbose=verbose
+        )
+        print(
+            f"You can now start chatting with the model '{self.config.get_model}'.\
+            Type 'exit' to quit.\n"
+        )
+
+        # Start the chat loop
+        while True:
+            user_input = input("You: ")
+            if user_input.lower() == "exit":
+                break
+            response = chatbot.predict(user_input)
+            print(f"AI: {response}")
+            chatbot.add_to_memory(user_input, response)
