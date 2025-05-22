@@ -18,12 +18,6 @@ class TextProcessor:
             config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
         """
         self.config = config or ConfigManager()
-
-        # self.memory_settings = self.config.get_memory_settings
-        # self.prompt_settings = self.config.get_prompt_settings
-        # self.prompt_templates = self.prompt_settings["templates"]
-        # self.resources = self.config.get_examples
-
         self.llm_client = LLMClient(self.config)
         self.prompt_manager = PromptManager(self.config)
         self.output_parser = OutputParser(self.config)
@@ -107,11 +101,10 @@ class TextProcessor:
         )
         text = text or example["source"]
         schema_name = schema_name or example["schema"]
-        schema = self.prompt_manager.get_schema(schema_name)
-        parser = self.output_parser.get_parser(schema)
+        parser = self.output_parser.get_parser(schema_name)
 
         if not parser:
-            raise ValueError(f"Schema '{schema}' not found in configuration")
+            raise ValueError(f"Schema '{schema_name}' not found in configuration")
 
         format_instructions = self.output_parser.get_format_instructions(parser)
 
