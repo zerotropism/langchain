@@ -145,14 +145,14 @@ class TextProcessor:
                 defaults to False
         """
         # Check if memory type is passed, otherwise use default from memory settings
-        memory_type = memory.lower() if memory else self.memory_manager.get_memory_type
+        memory_type = memory.lower() if memory else self.memory_manager.memory_type
 
         # Create the appropriate memory manager
         chatbot = self.memory_manager.build(
             self.llm_client, memory_type, verbose=verbose
         )
         print(
-            f"You can now start chatting with the model '{self.config.get_model}'.\
+            f"You can now start chatting with the model '{self.config.get("model", "name")}'.\
             Type 'exit' to quit.\n"
         )
 
