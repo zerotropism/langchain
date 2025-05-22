@@ -10,9 +10,9 @@ class PromptManager:
 
     def __init__(self, config: ConfigManager):
         self.config = config
-        self.templates = config.get("prompts")
-        self.examples = config.get("examples")
-        self.schemas = config.get("schemas")
+        self.prompt_templates = config.get("prompts")
+        self.usecase_examples = config.get("examples")
+        self.schema_templates = config.get("schemas")
 
     @handle_exception
     def create_template(self, template_string: str) -> ChatPromptTemplate:
@@ -32,16 +32,16 @@ class PromptManager:
         Args:
             name (`str`): Name of the template
         """
-        if name not in self.templates:
-            if self.templates:
+        if name not in self.prompt_templates:
+            if self.prompt_templates:
                 print(
                     f"Template '{name}' not found. Returning the list of available templates:"
                 )
-                print(list(self.templates.keys()))
+                print(list(self.prompt_templates.keys()))
                 return None
             print("No templates available.")
             return None
-        return self.create_template(self.templates.get(name))
+        return self.create_template(self.prompt_templates.get(name))
 
     @handle_exception
     def get_example(self, task: str, name: str):
@@ -51,7 +51,7 @@ class PromptManager:
             task (`str`): The task name
             name (`str`): The example name
         """
-        for example in self.examples.get(task, []):
+        for example in self.usecase_examples.get(task, []):
             if example.get("name") == name:
                 return example
         return None
@@ -63,16 +63,16 @@ class PromptManager:
         Args:
             name (`str`): The schema name
         """
-        if name not in self.schemas:
-            if self.schemas:
+        if name not in self.schema_templates:
+            if self.schema_templates:
                 print(
                     f"Schema '{name}' not found. Returning the list of available schemas:"
                 )
-                print(list(self.schemas.keys()))
+                print(list(self.schema_templates.keys()))
                 return None
             print("No schemas available.")
             return None
-        return self.schemas.get(name)
+        return self.schema_templates.get(name)
 
     @handle_exception
     def format_simple_text(self, prompt: str) -> List[HumanMessage]:
@@ -124,7 +124,7 @@ class PromptManager:
             prompt (`str` or `list` or `ChatPromptTemplate`): The prompt to format
         """
         if not prompt:
-            return self.format_simple_text(self.default_prompt)
+            return self.format_simple_text(self.prompt_templates.get("default"))
         elif isinstance(prompt, str):
             return self.format_simple_text(prompt)
         elif isinstance(prompt, list):

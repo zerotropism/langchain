@@ -44,7 +44,9 @@ class TextProcessor:
         Returns:
             str: The model's response as a string
         """
-        formatted_prompt = self.prompt_manager.formatter(prompt=prompt, **kwargs)
+        formatted_prompt = self.prompt_manager.formatter(
+            prompt=prompt or self.config.get("prompts", "one_shot"), **kwargs
+        )
         llm = self.llm_client.infer()
         response = llm.invoke(formatted_prompt)
         return response.content

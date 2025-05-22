@@ -8,17 +8,16 @@ class ConfigManager:
         """Initialize the configuration manager."""
         self._config = config_data or {}
 
-    def get(self, section: str, key: Optional[str] = None, default=None):
+    def get(self, section: str, key: Optional[str] = None):
         """Generic method to retrieve configuration values from the config file.
         Args:
             section (str): The section of the configuration to retrieve from.
             key (str, optional): The specific key within the section.
                 If None, return the entire section.
-            default: Default value to return if the key is not found.
         """
         section_data = self._config.get(section, {})
         if key:
-            return section_data.get(key, default)
+            return section_data.get(key, "default")
         return section_data
 
     def get_prompt(self, name: str = "default"):
