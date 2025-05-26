@@ -75,62 +75,25 @@ class PromptManager:
         return self.schema_templates.get(name)
 
     @handle_exception
-    def format_simple_text(self, prompt: str) -> List[HumanMessage]:
-        """
-        Format a prompt to an LLM-ready message.
-
-        Take a string prompt and return it as HumanMessage object.
-        Args:
-            prompt (`str`): The prompt string with variables in {curly_braces}
-        """
-        return [HumanMessage(content=prompt)]
-
-    @handle_exception
-    def format_list_of_texts(self, prompts: List[str]) -> List[HumanMessage]:
-        """
-        Format a list of prompts to LLM-ready messages.
-
-        Take a list of string prompts and return a list of HumanMessage objects.
-        Args:
-            prompts (`list`): The list of prompt strings with variables in {curly_braces}
-        """
-        return [
-            prompt if isinstance(prompt, HumanMessage) else HumanMessage(content=prompt)
-            for prompt in prompts
-        ]
-
-    @handle_exception
-    def format_template_text(
-        self, template: ChatPromptTemplate, **kwargs
-    ) -> List[HumanMessage]:
-        """
-        Format a template to an LLM-ready template content.
-
-        Take a template text as ChatPromptTemplate object
-        and format it with the provided keyword arguments.
-        Args:
-            template (`ChatPromptTemplate`): The prompt template
-            **kwargs: The values to fill into the template
-        """
-        return template.format_messages(**kwargs)
-
-    @handle_exception
-    def formatter(self, prompt: Optional[Any], **kwargs) -> str:
+    def formatter(self, prompt: Optional[Any], **kwargs) -> List:
         """
         Call for the right prompt formatting methods based on the prompt type.
 
-        Take a prompt and call the approriate formatting to an LLM-ready message.
+        Take a prompt and call the properly format it to an LLM-ready message.
         Args:
             prompt (`str` or `list` or `ChatPromptTemplate`): The prompt to format
         """
         if not prompt:
-            return self.format_simple_text(self.prompt_templates.get("default"))
+            return [HumanMessage(self.prompt_templates.get("default"))]
         elif isinstance(prompt, str):
-            return self.format_simple_text(prompt)
+            return [HumanMessage(content=prompt)]
         elif isinstance(prompt, list):
-            return self.format_list_of_texts(prompt)
+            return [
+                p if isinstance(p, HumanMessage) else HumanMessage(content=prompt)
+                for p in prompt
+            ]
         elif isinstance(prompt, ChatPromptTemplate):
-            return self.format_template_text(prompt, **kwargs)
+            return prompt.format_messages(**kwargs)
         else:
             raise ValueError(
                 "Unsupported prompt type. Must be str, list, or ChatPromptTemplate object."
