@@ -2,7 +2,7 @@ from typing import List, Dict, Optional, Any
 from config import ConfigManager
 from decorators import handle_exception
 from langchain.prompts import ChatPromptTemplate
-from langchain.schema import HumanMessage
+from langchain.schema import HumanMessage, SystemMessage
 
 
 class PromptManager:
@@ -98,3 +98,22 @@ class PromptManager:
             raise ValueError(
                 "Unsupported prompt type. Must be str, list, or ChatPromptTemplate object."
             )
+
+    @handle_exception
+    def build_chat_messages(
+        self, system_prompt: str = None, user_prompt: str = None
+    ) -> list:
+        """
+        Construit une liste de messages pour un chat à partir de chaînes de caractères.
+        Args:
+            system_prompt (str, optional): Le prompt système à inclure en premier.
+            user_prompt (str, optional): Le message utilisateur à inclure ensuite.
+        Returns:
+            list: Liste de SystemMessage et/ou HumanMessage selon les inputs.
+        """
+        messages = []
+        if system_prompt:
+            messages.append(SystemMessage(content=system_prompt))
+        if user_prompt:
+            messages.append(HumanMessage(content=user_prompt))
+        return messages

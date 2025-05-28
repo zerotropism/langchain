@@ -3,8 +3,8 @@ from config import ConfigManager
 from llm import LLMClient
 from prompting import PromptManager
 from parsing import OutputParser
-
 from memory import MemoryFactory
+from history import MessageHistoryMemoryManager
 from decorators import handle_exception, timing_decorator
 
 
@@ -23,6 +23,7 @@ class TextProcessor:
         self.prompt_manager = PromptManager(self.config)
         self.output_parser = OutputParser(self.config)
         self.memory_manager = MemoryFactory(self.config)
+        self.history_manager = MessageHistoryMemoryManager(self.config)
 
     @handle_exception
     @timing_decorator
@@ -131,14 +132,14 @@ class TextProcessor:
 
     @handle_exception
     @timing_decorator
-    def chat(
+    def chat_legacy_memory(
         self,
         memory: Optional[str] = None,
         verbose: bool = False,
         system_prompt: Optional[str] = None,
     ) -> None:
         """
-        Start a memory-capable chat instance.
+        Start a legacy-mode, memory-capable chat instance.
 
         Args:
             memory_type (`str`, optional): Type of memory manager to use,
@@ -180,17 +181,26 @@ class TextProcessor:
 
             chatbot.add_to_memory(user_input, response)
 
-    def chat2(
+    def chat_legacy_history(
         self,
         custom_llm: Optional[LLMClient] = None,
         custom_memory: Optional[str] = None,
         custom_system_prompt: Optional[str] = None,
         verbose: bool = False,
     ) -> None:
-        from memory import MessageHistoryMemoryManager
+        """Start a legacy-mode, history-capable chat instance.
 
-        llm = custom_llm or self.llm_client.infer()
-        manager = MessageHistoryMemoryManager(llm)
+        Args:
+            custom_llm (`LLMClient`, optional): Custom LLM client to use,
+                defaults to the one from config
+            custom_memory (`str`, optional): Type of memory manager to use,
+                defaults to "buffer"
+            custom_system_prompt (`str`, optional): Custom system prompt use,
+                defaults to the one from config
+            verbose (`bool`, optional): Whether to print detailed information,
+                defaults to False
+        """
+        # Set parameters for the chat instance
         session_id = "default"
         system_prompt = (
             custom_system_prompt or self.prompt_manager.prompt_templates.get("system")
@@ -200,6 +210,7 @@ class TextProcessor:
             f"Vous pouvez maintenant discuter avec le modèle '{self.config.get('model', 'name')}'.\nTapez 'exit' pour quitter.\n"
         )
 
+        # Start the chat loop
         first_turn = True
         while True:
             user_input = input("You: ")
@@ -207,17 +218,17 @@ class TextProcessor:
                 break
 
             if first_turn:
-                messages = [
-                    SystemMessage(content=system_prompt),
-                    HumanMessage(content=user_input),
-                ]
+                messages = self.prompt_manager.build_chat_messages(
+                    system_prompt=system_prompt, user_prompt=user_input
+                )
                 first_turn = False
             else:
-                messages = [HumanMessage(content=user_input)]
+                messages = self.prompt_manager.build_chat_messages(
+                    user_prompt=user_input
+                )
 
-            response = manager.runnable.invoke(
+            response = self.history_manager.runnable.invoke(
                 messages,
                 config={"configurable": {"session_id": session_id}},
             )
-            print(f"AI: {response}")
-            from updated_memory import MemoryFactory
+            print(f"AI: {response.content}")
