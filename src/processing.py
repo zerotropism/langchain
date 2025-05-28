@@ -3,6 +3,7 @@ from config import ConfigManager
 from llm import LLMClient
 from prompting import PromptManager
 from parsing import OutputParser
+
 from memory import MemoryFactory
 from decorators import handle_exception, timing_decorator
 
@@ -134,6 +135,7 @@ class TextProcessor:
         self,
         memory: Optional[str] = None,
         verbose: bool = False,
+        system_prompt: Optional[str] = None,
     ) -> None:
         """
         Start a memory-capable chat instance.
@@ -143,14 +145,25 @@ class TextProcessor:
                 defaults to "buffer"
             verbose (`bool`, optional): Whether to print detailed information,
                 defaults to False
+            system_prompt (`str`, optional): System prompt to initialize the chat with
         """
         # Check if memory type is passed, otherwise use default from memory settings
-        memory_type = memory.lower() if memory else self.memory_manager.memory_type
+        memory_type = (
+            memory.lower()
+            if memory and type(memory) == str
+            else self.memory_manager.memory_type
+        )
 
         # Create the appropriate memory manager
-        chatbot = self.memory_manager.build(
-            self.llm_client, memory_type, verbose=verbose
+        chatbot = self.memory_manager.build(self.llm_client, memory_type, verbose=True)
+
+        # Add system prompt to memory
+        chatbot.add_to_memory(
+            user_input=system_prompt
+            or self.prompt_manager.prompt_templates.get("system"),
+            ai_output="I'll keep it professional from now on. What can I assist you with today?",
         )
+
         print(
             f"You can now start chatting with the model '{self.config.get("model", "name")}'.\
             Type 'exit' to quit.\n"
@@ -161,6 +174,50 @@ class TextProcessor:
             user_input = input("You: ")
             if user_input.lower() == "exit":
                 break
+
             response = chatbot.predict(user_input)
             print(f"AI: {response}")
+
             chatbot.add_to_memory(user_input, response)
+
+    def chat2(
+        self,
+        custom_llm: Optional[LLMClient] = None,
+        custom_memory: Optional[str] = None,
+        custom_system_prompt: Optional[str] = None,
+        verbose: bool = False,
+    ) -> None:
+        from memory import MessageHistoryMemoryManager
+
+        llm = custom_llm or self.llm_client.infer()
+        manager = MessageHistoryMemoryManager(llm)
+        session_id = "default"
+        system_prompt = (
+            custom_system_prompt or self.prompt_manager.prompt_templates.get("system")
+        )
+
+        print(
+            f"Vous pouvez maintenant discuter avec le modèle '{self.config.get('model', 'name')}'.\nTapez 'exit' pour quitter.\n"
+        )
+
+        first_turn = True
+        while True:
+            user_input = input("You: ")
+            if user_input.lower() == "exit":
+                break
+
+            if first_turn:
+                messages = [
+                    SystemMessage(content=system_prompt),
+                    HumanMessage(content=user_input),
+                ]
+                first_turn = False
+            else:
+                messages = [HumanMessage(content=user_input)]
+
+            response = manager.runnable.invoke(
+                messages,
+                config={"configurable": {"session_id": session_id}},
+            )
+            print(f"AI: {response}")
+            from updated_memory import MemoryFactory
