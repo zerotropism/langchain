@@ -6,19 +6,32 @@ from processing import TextProcessor
 
 
 def mode_selector():
-    print(
-        """
-What do you want to do? (i.e. prompt, chat, rag, agent, evaluate)
-    - prompt: Generate text based on a template you can build.
-    - chat: Chat with an LLM.
-    - rag: Query a document-based retrieval-augmented generator you will setup.
-    - agent: Setup & converse with a specialized Agent (available: basic math solver, wikipedia searcher, python coder or custom).
-    - evaluate: Setup an automated LLM-based evaluator for a simplistic RAG output.
-Input your choice:
-        """
-    )
-    mode = input()
-    return mode
+    modes = [
+        ("prompt", "Generate text based on a template you can build."),
+        ("chat_memory", "Chat with an LLM (legacy: simple memory)."),
+        ("chat_history", "Chat with an LLM (legacy: conversation history)."),
+        ("rag", "Query a document-based retrieval-augmented generator you will setup."),
+        (
+            "agent",
+            "Setup & converse with a specialized Agent. (available: basic math solver, wikipedia searcher, python coder or custom)",
+        ),
+        (
+            "evaluate",
+            "Setup an automated LLM-based evaluator for a simplistic RAG output.",
+        ),
+    ]
+    print("What do you want to do?")
+    for idx, (mode, desc) in enumerate(modes, 1):
+        print(f"({idx}) - {mode}: {desc}")
+    choice = input("Enter the number of your choice: ").strip()
+    try:
+        choice_num = int(choice)
+        if 1 <= choice_num <= len(modes):
+            return modes[choice_num - 1][0]
+        else:
+            raise ValueError
+    except ValueError:
+        raise ValueError("Invalid number. Please select a valid number.")
 
 
 def load_configurations(path: str = "src/config.yml") -> Dict:
@@ -37,13 +50,8 @@ def load_configurations(path: str = "src/config.yml") -> Dict:
 
 
 def prompt(conf: ConfigManager):
-    """Prompt mode, simplest way to interact with the LLM.
-
-    Generate text based on a template you can build.
-    Args:
-        conf (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
-    """
-    # The processor is a high-level interface for common text processing tasks including one-shot prompting
+    """Prompt mode, simplest way to interact with the LLM."""
+    # The processor is a high-level interface for common text processing tasks
     processor = TextProcessor(conf)
 
     # Get a simple completion
@@ -63,17 +71,17 @@ def prompt(conf: ConfigManager):
     return
 
 
-def chat(conf: ConfigManager):
-    """Chat mode, continuous conversation with the LLM.
-
-    Generate memomry-based contextualized responses to user queries.
-    Args:
-        conf (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
-    """
-    # The processor is a high-level interface for common text processing tasks including one-shot prompting
+def chat_memory(conf: ConfigManager):
+    """Chat mode, legacy memory capable."""
     processor = TextProcessor(conf)
-    processor.chat()
+    processor.chat_legacy_memory()
+    return
 
+
+def chat_history(conf: ConfigManager):
+    """Chat mode, legacy memory capable."""
+    processor = TextProcessor(conf)
+    processor.chat_legacy_history()
     return
 
 
@@ -96,34 +104,39 @@ def evaluate(conf: ConfigManager):
 
 
 def run_mode(mode: str, conf: ConfigManager):
-    """Run the specified mode.
-
-    Args:
-        mode (`str`): mode as a function name to run
-        conf (`ConfigManager`): configuration settings from `./config.yml` file
-    """
-    # Get the function corresponding to the mode
-    function = globals().get(mode)
-    if callable(function):
-        # Call the function with the configurations
-        function(conf)
+    if mode == "chat-memory":
+        processor = TextProcessor(conf)
+        processor.chat_legacy_memory()
+    elif mode == "chat-history":
+        processor = TextProcessor(conf)
+        processor.chat_legacy_history()
     else:
-        print(f"'{mode}' has no implemented function.")
+        function = globals().get(mode)
+        if callable(function):
+            function(conf)
+        else:
+            print(f"'{mode}' has no implemented function.")
 
 
 def main():
+    valid_modes = [
+        "prompt",
+        "chat_memory",
+        "chat_history",
+        "rag",
+        "agent",
+        "evaluate",
+    ]
     mode = mode_selector().strip().lower()
 
     # Raise an error if mode is not valid
     if not mode:
         raise ValueError(
-            "Mode must be specified. Available modes: 'prompt', 'chat', 'rag', 'agent' & 'evaluate'"
+            f"Mode must be specified. Available modes: {', '.join(valid_modes)}"
         )
 
-    elif mode not in ["prompt", "chat", "rag", "agent", "evaluate"]:
-        raise ValueError(
-            "Invalid mode. Available modes: 'prompt', 'chat', 'rag', 'agent' & 'evaluate'"
-        )
+    elif mode not in valid_modes:
+        raise ValueError(f"Invalid mode. Available modes: {', '.join(valid_modes)}")
 
     else:
         # Load configuration file
