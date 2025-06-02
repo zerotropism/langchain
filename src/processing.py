@@ -3,6 +3,7 @@ from config import ConfigManager
 from llm import LLMClient
 from prompting import PromptManager
 from parsing import OutputParser
+
 from memory import MemoryFactory
 from history import MessageHistoryMemoryManager
 from decorators import handle_exception, timing_decorator
@@ -134,29 +135,37 @@ class TextProcessor:
     @timing_decorator
     def chat_legacy_memory(
         self,
-        memory: Optional[str] = None,
+        custom_llm: Optional[LLMClient] = None,
+        custom_memory: Optional[str] = None,
+        custom_system_prompt: Optional[str] = None,
         verbose: bool = False,
-        system_prompt: Optional[str] = None,
     ) -> None:
         """
         Start a legacy-mode, memory-capable chat instance.
 
         Args:
-            memory_type (`str`, optional): Type of memory manager to use,
+            custom_llm (`LLMClient`, optional): Custom LLM client to use,
+                defaults to the one from config
+            custom_memory (`str`, optional): Type of memory manager to use,
                 defaults to "buffer"
+            custom_system_prompt (`str`, optional): Custom system prompt use,
+                defaults to the one from config
             verbose (`bool`, optional): Whether to print detailed information,
                 defaults to False
-            system_prompt (`str`, optional): System prompt to initialize the chat with
         """
-        # Check if memory type is passed, otherwise use default from memory settings
-        memory_type = (
-            memory.lower()
-            if memory and type(memory) == str
+        # Get proper llm, memory & system prompt parameters, defaulting to config values
+        llm = custom_llm or self.llm_client
+        memory = (
+            custom_memory.lower()
+            if custom_memory and type(custom_memory) == str
             else self.memory_manager.memory_type
+        )
+        system_prompt = (
+            custom_system_prompt or self.prompt_manager.prompt_templates.get("system")
         )
 
         # Create the appropriate memory manager
-        chatbot = self.memory_manager.build(self.llm_client, memory_type, verbose=True)
+        chatbot = self.memory_manager.build(llm, memory, verbose=verbose)
 
         # Add system prompt to memory
         chatbot.add_to_memory(
@@ -175,10 +184,8 @@ class TextProcessor:
             user_input = input("You: ")
             if user_input.lower() == "exit":
                 break
-
             response = chatbot.predict(user_input)
             print(f"AI: {response}")
-
             chatbot.add_to_memory(user_input, response)
 
     def chat_legacy_history(
