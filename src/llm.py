@@ -13,7 +13,6 @@ class LLMClient:
         Args:
             config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
         """
-        # Utilisation de la nouvelle méthode générique pour accéder à la config
         model_settings = config.get("model") if config else ConfigManager().get("model")
         self._model = model_settings.get("name")
         self._temperature = model_settings.get("temperature")
