@@ -86,3 +86,10 @@ schemas:
       description: >
         Extract any sentences about the value or price,
         and output them as a comma separated Python list.
+
+# RAG (Retrieval Augmented Generation)
+rag:
+  filepath: "../data/clothing.csv"
+  embedding_model: "nomic-embed-text"
+  instance_mode: ":memory:"
+  collection_name: "top_wines"

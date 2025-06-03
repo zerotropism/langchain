@@ -3,6 +3,8 @@ import yaml
 from typing import Dict
 from config import ConfigManager
 from processing import TextProcessor
+from rag import RAGSystem
+from pprint import pprint
 
 
 def mode_selector():
@@ -87,8 +89,10 @@ def chat_history(conf: ConfigManager):
 
 def rag(conf: ConfigManager):
     """RAG mode."""
-    # Implement the logic for RAG mode here
-    pass
+    rag = RAGSystem(config=conf)
+    query = "Please list all your shirts with sun protection and summarize each one"
+    print(f"\nDemo search on example query: '{query}'\n")
+    rag.direct_search_and_answer(query).pretty_print()
 
 
 def agent(conf: ConfigManager):
@@ -104,18 +108,11 @@ def evaluate(conf: ConfigManager):
 
 
 def run_mode(mode: str, conf: ConfigManager):
-    if mode == "chat-memory":
-        processor = TextProcessor(conf)
-        processor.chat_legacy_memory()
-    elif mode == "chat-history":
-        processor = TextProcessor(conf)
-        processor.chat_legacy_history()
+    function = globals().get(mode)
+    if callable(function):
+        function(conf)
     else:
-        function = globals().get(mode)
-        if callable(function):
-            function(conf)
-        else:
-            print(f"'{mode}' has no implemented function.")
+        print(f"'{mode}' has no implemented function.")
 
 
 def main():
