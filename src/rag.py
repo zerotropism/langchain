@@ -10,6 +10,7 @@ from langchain_community.vectorstores import DocArrayInMemorySearch
 # Specific modules and local RAG related imports
 from llm import LLMClient
 from config import ConfigManager
+from prompting import PromptManager
 from langchain_ollama import OllamaEmbeddings
 from decorators import handle_exception, timing_decorator
 
@@ -103,6 +104,7 @@ class RAGSystem:
         self.documents = self.get_documents(self.filepath)
 
         # Initialize services
+        self.prompt_manager = PromptManager(self.config)
         self.embedding_service = EmbeddingService(self.rag_settings)
         self.llm_service = LLMClient(self.config).infer()
         self.vector_db = self.build_index()
@@ -218,3 +220,76 @@ class RAGSystem:
         """
         qa_chain = self.create_qa_chain(chain_type=chain_type, verbose=verbose)
         return qa_chain.run(query)
+
+    @handle_exception
+    def chat_with_rag(self, chain_type: str = "stuff", verbose: bool = False) -> None:
+        """Interactive chat loop using RAG to answer user queries."""
+
+        print("Welcome to the RAG chatbot. Type 'exit' to quit.")
+        while True:
+            query = input("You: ")
+
+            if query.strip().lower() in ["exit", "quit"]:
+                print("Chat session ended.")
+                break
+
+            try:
+                response = self.query_with_chain(query, chain_type, verbose)
+            except Exception as e:
+                response = f"[Error generating response: {e}]"
+            print("Bot:", response)
+
+    @handle_exception
+    def chat_with_rag_hybrid(
+        self, chain_type: str = "stuff", verbose: bool = False, max_history: int = 5
+    ) -> None:
+        """
+        Hybrid interactive chat loop using RAG:
+        - Maintains conversation memory (windowed)
+        - Displays retrieved documents to the user
+        - Uses a customizable prompt template
+        - Robust to long conversations (history window)
+        """
+        print("Welcome to the hybrid RAG chatbot. Type 'exit' to quit.")
+        history = []  # List of (user, bot) tuples
+
+        # Prompt template
+        prompt_template = self.prompt_manager.get_template("rag")
+
+        while True:
+            user_input = input("You: ")
+            if user_input.strip().lower() in ["exit", "quit"]:
+                print("Chat session ended.")
+                break
+
+            # Explicit vector DB search
+            try:
+                hits = self.embedding_service.similarity_search(user_input, k=3)
+                search_results = "\n".join([hit.page_content for hit in hits])
+            except Exception as e:
+                search_results = f"[Error retrieving search results: {e}]"
+
+            # Show search results to the user
+            print("\nVector DB search results:\n", search_results, "\n")
+
+            # Sliding window history management
+            windowed_history = history[-max_history:]
+            history_str = ""
+            for user, bot in windowed_history:
+                history_str += f"User: {user}\nBot: {bot}\n"
+
+            # Create prompt with history and search results
+            prompt = prompt_template.format(
+                history=history_str,
+                search_results=search_results,
+                user_input=user_input,
+            )
+
+            # Generate response using the RAG chain
+            try:
+                response = self.query_with_chain(prompt, chain_type, verbose)
+            except Exception as e:
+                response = f"[Error generating response: {e}]"
+
+            print("Bot:", response)
+            history.append((user_input, response))

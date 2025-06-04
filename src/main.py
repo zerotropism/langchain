@@ -13,6 +13,7 @@ def mode_selector():
         ("chat_memory", "Chat with an LLM (legacy: simple memory)."),
         ("chat_history", "Chat with an LLM (legacy: conversation history)."),
         ("rag", "Query a document-based retrieval-augmented generator you will setup."),
+        ("chat_rag", "Chatbot avec recherche RAG (retrieval-augmented generation)."),
         (
             "agent",
             "Setup & converse with a specialized Agent. (available: basic math solver, wikipedia searcher, python coder or custom)",
@@ -89,10 +90,19 @@ def chat_history(conf: ConfigManager):
 
 def rag(conf: ConfigManager):
     """RAG mode."""
+    # Perform a standalone manual search and generate an answer using the LLM
     rag = RAGSystem(config=conf)
     query = "Please list all your shirts with sun protection and summarize each one"
     print(f"\nDemo search on example query: '{query}'\n")
     rag.direct_search_and_answer(query).pretty_print()
+
+
+def chat_rag(conf: ConfigManager):
+    """Chat mode with RAG capabilities."""
+    # Converse with an LLM that has RAG capabilities
+    rag = RAGSystem(config=conf)
+    rag.chat_with_rag()
+    return
 
 
 def agent(conf: ConfigManager):
@@ -121,6 +131,7 @@ def main():
         "chat_memory",
         "chat_history",
         "rag",
+        "chat_rag",
         "agent",
         "evaluate",
     ]

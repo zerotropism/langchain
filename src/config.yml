@@ -33,6 +33,12 @@ prompts:
     For the following text, extract the following information:
     {format_instructions}
     text: {text}
+  rag: >
+    You are a helpful assistant.
+    Here is the conversation history: {history}
+    Here are the top search results: {search_results}
+    User question: {user_input}
+    Answer:
 
 # Example applications
 examples:
@@ -91,5 +97,3 @@ schemas:
 rag:
   filepath: "../data/clothing.csv"
   embedding_model: "nomic-embed-text"
-  instance_mode: ":memory:"
-  collection_name: "top_wines"

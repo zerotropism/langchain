@@ -184,6 +184,7 @@ class TextProcessor:
         while True:
             user_input = input("You: ")
             if user_input.lower() == "exit":
+                print("Chat session ended.")
                 break
             response = chatbot.predict(user_input)
             print(f"AI: {response}")
@@ -223,6 +224,7 @@ class TextProcessor:
         while True:
             user_input = input("You: ")
             if user_input.lower() == "exit":
+                print("Chat session ended.")
                 break
 
             if first_turn:
