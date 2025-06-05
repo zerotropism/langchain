@@ -182,11 +182,15 @@ class TextProcessor:
 
         # Start the chat loop
         while True:
+            print("\n")
             user_input = input("You: ")
-            if user_input.lower() == "exit":
+
+            if user_input.strip().lower() in ["exit", "quit"]:
                 print("Chat session ended.")
                 break
+
             response = chatbot.predict(user_input)
+            print("\n")
             print(f"AI: {response}")
             chatbot.add_to_memory(user_input, response)
 
@@ -222,8 +226,10 @@ class TextProcessor:
         # Start the chat loop
         first_turn = True
         while True:
+            print("\n")
             user_input = input("You: ")
-            if user_input.lower() == "exit":
+
+            if user_input.strip().lower() in ["exit", "quit"]:
                 print("Chat session ended.")
                 break
 
@@ -241,4 +247,5 @@ class TextProcessor:
                 messages,
                 config={"configurable": {"session_id": session_id}},
             )
+            print("\n")
             print(f"AI: {response.content}")

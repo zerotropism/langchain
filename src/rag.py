@@ -219,7 +219,7 @@ class RAGSystem:
             Response from the QA chain
         """
         qa_chain = self.create_qa_chain(chain_type=chain_type, verbose=verbose)
-        return qa_chain.run(query)
+        return qa_chain.invoke(query)
 
     @handle_exception
     def chat_with_rag(self, chain_type: str = "stuff", verbose: bool = False) -> None:
@@ -227,6 +227,7 @@ class RAGSystem:
 
         print("Welcome to the RAG chatbot. Type 'exit' to quit.")
         while True:
+            print("\n")
             query = input("You: ")
 
             if query.strip().lower() in ["exit", "quit"]:
@@ -237,7 +238,9 @@ class RAGSystem:
                 response = self.query_with_chain(query, chain_type, verbose)
             except Exception as e:
                 response = f"[Error generating response: {e}]"
-            print("Bot:", response)
+            response_content = response.get("result", response)
+            print("\n")
+            print("Bot:", response_content)
 
     @handle_exception
     def chat_with_rag_hybrid(
@@ -257,7 +260,9 @@ class RAGSystem:
         prompt_template = self.prompt_manager.get_template("rag")
 
         while True:
+            print("\n")
             user_input = input("You: ")
+
             if user_input.strip().lower() in ["exit", "quit"]:
                 print("Chat session ended.")
                 break
@@ -270,6 +275,7 @@ class RAGSystem:
                 search_results = f"[Error retrieving search results: {e}]"
 
             # Show search results to the user
+            print("\n")
             print("\nVector DB search results:\n", search_results, "\n")
 
             # Sliding window history management
@@ -290,6 +296,7 @@ class RAGSystem:
                 response = self.query_with_chain(prompt, chain_type, verbose)
             except Exception as e:
                 response = f"[Error generating response: {e}]"
-
-            print("Bot:", response)
-            history.append((user_input, response))
+            response_content = response.get("result", response)
+            print("\n")
+            print("Bot:", response_content)
+            history.append((user_input, response_content))
