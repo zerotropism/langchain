@@ -31,9 +31,13 @@ class OutputParser:
         Create a parser for JSON-formatted outputs.
 
         Take a list of schema definitions and return a StructuredOutputParser object.
+
         Args:
             schema_definitions (`list`): List of dictionaries containing schema definitions
             Each dict should have 'name' and 'description' keys
+
+        Returns:
+            StructuredOutputParser: A parser configured with the provided schema definitions
         """
         schemas = [
             ResponseSchema(name=schema["name"], description=schema["description"])
@@ -48,8 +52,12 @@ class OutputParser:
         Get formatting instructions for a given parser.
 
         Take a parser and return its formatting instructions as a string.
+
         Args:
             parser (`StructuredOutputParser`): The parser to get instructions from
+
+        Returns:
+            str: Formatting instructions for the parser
         """
         return parser.get_format_instructions()
 
@@ -60,9 +68,13 @@ class OutputParser:
         Parse structured output from a model response.
 
         Take a parser and a string output from the model, and return a dictionary
+
         Args:
             parser (`StructuredOutputParser`): The parser to use
             output (`str`): The string output from the model
+
+        Returns:
+            Dict[str, Any]: Parsed output as a dictionary
         """
         return parser.parse(output)
 
@@ -72,7 +84,11 @@ class OutputParser:
         Get a preloaded parser by name.
 
         Take a name and return the corresponding parser if it exists.
+
         Args:
             name (`str`): Name of the parser/schema
+
+        Returns:
+            Optional[StructuredOutputParser]: The parser if found, otherwise None.
         """
         return self.parsers.get(name)

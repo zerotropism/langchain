@@ -17,20 +17,26 @@ class PromptManager:
     @handle_exception
     def create_template(self, template_string: str) -> ChatPromptTemplate:
         """
-        Create a chat prompt template from a string
-        and return it as a ChatPromptTemplate object.
+        Create a chat prompt template from a string and return it as a ChatPromptTemplate object.
+
         Args:
             template_string (`str`): The template string with variables in {curly_braces}
+
+        Returns:
+            ChatPromptTemplate: A ChatPromptTemplate object ready for use with LLMs.
         """
         return ChatPromptTemplate.from_template(template_string)
 
     @handle_exception
     def get_template(self, name: str = "default") -> ChatPromptTemplate:
         """
-        Retrieve a prompt template by name
-        and return it as a LLM-ready ChatPromptTemplate object.
+        Retrieve a prompt template by name and return it as an LLM-ready ChatPromptTemplate object.
+
         Args:
             name (`str`): Name of the template
+
+        Returns:
+            ChatPromptTemplate: A ChatPromptTemplate object ready for use with LLMs.
         """
         if name not in self.prompt_templates:
             if self.prompt_templates:
@@ -47,9 +53,13 @@ class PromptManager:
     def get_example(self, task: str, name: str):
         """
         Retrieve an example by task and name.
+
         Args:
             task (`str`): The task name
             name (`str`): The example name
+
+        Returns:
+            dict: The example dictionary if found, otherwise None.
         """
         for example in self.usecase_examples.get(task, []):
             if example.get("name") == name:
@@ -60,8 +70,12 @@ class PromptManager:
     def get_schema(self, name: str):
         """
         Retrieve a schema by name.
+
         Args:
             name (`str`): The schema name
+
+        Returns:
+            dict: The schema dictionary if found, otherwise None.
         """
         if name not in self.schema_templates:
             if self.schema_templates:
@@ -80,8 +94,12 @@ class PromptManager:
         Call for the right prompt formatting methods based on the prompt type.
 
         Take a prompt and call the properly format it to an LLM-ready message.
+
         Args:
             prompt (`str` or `list` or `ChatPromptTemplate`): The prompt to format
+
+        Returns:
+            List: A list of HumanMessage objects ready for use with LLMs.
         """
         if not prompt:
             return [HumanMessage(self.prompt_templates.get("default"))]
@@ -104,12 +122,14 @@ class PromptManager:
         self, system_prompt: str = None, user_prompt: str = None
     ) -> list:
         """
-        Construit une liste de messages pour un chat à partir de chaînes de caractères.
+        Builds a list of chat messages from string inputs.
+
         Args:
-            system_prompt (str, optional): Le prompt système à inclure en premier.
-            user_prompt (str, optional): Le message utilisateur à inclure ensuite.
+            system_prompt (str, optional): The system prompt to include first
+            user_prompt (str, optional): The user message to include next
+
         Returns:
-            list: Liste de SystemMessage et/ou HumanMessage selon les inputs.
+            list: List of SystemMessage and/or HumanMessage depending on the inputs.
         """
         messages = []
         if system_prompt:

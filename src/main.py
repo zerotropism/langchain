@@ -4,7 +4,6 @@ from typing import Dict
 from config import ConfigManager
 from processing import TextProcessor
 from rag import RAGSystem
-from pprint import pprint
 
 
 def mode_selector():
@@ -45,8 +44,12 @@ def load_configurations(path: str = "src/config.yml") -> Dict:
     """Load configuration from a YAML file.
 
     Take a filepath string and return a dictionary with the configuration settings.
+
     Args:
         path (`str`, optional): path to the YAML file, defaults to "config.yml"
+
+    Returns:
+        Dict: A dictionary with the configuration settings
     """
     try:
         with open(path, "r") as file:

@@ -31,8 +31,7 @@ class TextProcessor:
     @timing_decorator
     def generate(self, prompt: Optional[Any] = None, **kwargs) -> str:
         """
-        Generate text based on a prompt. LLMClient class to send a prompt to, and return
-        a response from, the model.
+        Generate text based on a prompt.
 
         Args:
             prompt: The text prompt to send to the model, defaults to one_shot example
@@ -61,6 +60,7 @@ class TextProcessor:
         Translate text to a different style.
 
         Take a usecase name from config file or a custom text and style to translate.
+
         Args:
             usecase (`str`, optional): The use case to translate, defaults to
                 translate example from config file if None
@@ -68,6 +68,9 @@ class TextProcessor:
                 config.source if None
             style (`str`, optional): The style to use for translation,
                 defaults to config.style if None
+
+        Returns:
+            str: The translated text
         """
         # Get prompt settings ie. source text, style to use and assignment template
         example = self.prompt_manager.get_example("translate", usecase or "pirate")
@@ -93,11 +96,15 @@ class TextProcessor:
 
         Take a target text and a schema name, and return a dictionary with the extracted
         information.
+
         Args:
             text (`str`, optional): The text to analyze,
                 defaults to config.source if None
             schema_name (`str`, optional): Name of the schema to use,
                 defaults to config.schema_name if None
+
+        Returns:
+            Dict[str, Any]: A dictionary with the extracted information
         """
         # Get prompt settings ie. source text, schema to use and assignment template
         example = self.prompt_manager.get_example(

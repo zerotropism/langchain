@@ -27,7 +27,18 @@ class LLMClient:
         custom_temperature: float = None,
         custom_token_count: bool = False,
     ):
-        """Lazy-loaded chat model instance."""
+        """Lazy-loaded chat model instance.
+
+        This method initializes the ChatOllama instance with the specified model and temperature.
+
+        Args:
+            custom_model (`str`, optional): Custom model name to use instead of the default.
+            custom_temperature (`float`, optional): Custom temperature for the model.
+            custom_token_count (`bool`, optional): If True, uses a custom token counting method.
+
+        Returns:
+            ChatOllama: An instance of the ChatOllama class configured with the specified parameters.
+        """
         self._chat_instance = (
             self._chat_instance
             or ChatOllama(

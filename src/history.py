@@ -4,12 +4,12 @@ from langchain.memory import (
     ConversationTokenBufferMemory,
     ConversationSummaryBufferMemory,
 )
+from langchain_core.runnables.history import RunnableWithMessageHistory
 from typing import Optional
 from config import ConfigManager
 from decorators import handle_exception
 from typing import Optional
 from llm import LLMClient
-from langchain_core.runnables.history import RunnableWithMessageHistory
 
 
 class MessageHistoryMemoryManager:
@@ -38,6 +38,8 @@ class MessageHistoryMemoryManager:
             )
 
         class MemoryWrapper:
+            """Wrapper class to access chat memory messages."""
+
             def __init__(self, memory):
                 self.memory = memory
 
@@ -80,6 +82,16 @@ class MemoryFactory:
 
     @handle_exception
     def build(self, memory_type: Optional[str] = "buffer", **kwargs):
+        """
+        Build the appropriate memory manager based on the specified type.
+
+        Args:
+            memory_type (`str`, optional): The type of memory to create, defaults to "buffer"
+            **kwargs: Additional keyword arguments for the memory class
+
+        Returns:
+            An instance of the specified memory class.
+        """
         # Mapping memory types to their respective classes
         memory_classes = {
             "buffer": ConversationBufferMemory,

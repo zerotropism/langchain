@@ -116,6 +116,9 @@ class RAGSystem:
 
         Args:
             filepath: Path to the CSV file (overrides the one set at initialization)
+
+        Returns:
+            List of Document objects loaded from the CSV file
         """
         self.filepath = filepath or self.rag_settings.get("filepath")
 
@@ -225,7 +228,15 @@ class RAGSystem:
 
     @handle_exception
     def chat_with_rag(self, chain_type: str = "stuff", verbose: bool = False) -> None:
-        """Interactive chat loop using RAG to answer user queries."""
+        """Interactive chat loop using RAG to answer user queries.
+
+        This method allows users to ask questions and receive answers based on the
+        documents loaded into the vector database.
+
+        Args:
+            chain_type: Type of chain to use for RAG, defaults to "stuff"
+            verbose: Whether to display verbose output, defaults to False
+        """
 
         print("Welcome to the RAG chatbot. Type 'exit' to quit.")
         while True:
@@ -248,12 +259,14 @@ class RAGSystem:
     def chat_with_rag_hybrid(
         self, chain_type: str = "stuff", verbose: bool = False, max_history: int = 5
     ) -> None:
-        """
-        Hybrid interactive chat loop using RAG:
-        - Maintains conversation memory (windowed)
-        - Displays retrieved documents to the user
-        - Uses a customizable prompt template
-        - Robust to long conversations (history window)
+        """Interactive chat loop using RAG with hybrid memory management.
+
+        This method combines vector database search with a sliding window of chat history.
+
+        Args:
+            chain_type: Type of chain to use for RAG, defaults to "stuff"
+            verbose: Whether to display verbose output, defaults to False
+            max_history: Maximum number of turns to keep in memory, defaults to 5
         """
         print("Welcome to the hybrid RAG chatbot. Type 'exit' to quit.")
         history = []  # List of (user, bot) tuples
