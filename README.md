@@ -18,11 +18,12 @@ Features a clean separation of concerns with specialized components for:
 * Prompt template management (PromptManager)
 * Structured output parsing (OutputParser)
 * Text processing operations (TextProcessor)
-* Memory management (MemoryFactory)
+* Memory management (MemoryFactory & MessageHistoryMemoryManager)
+* Retrieval Augmented Generation System (RAGSystem)
 
 ## Content
 
-* `amazon.csv` & `clothing.csv` datasets
+* `src/` folder for factored code
+* `amazon.csv` & `clothing.csv` example datasets
 * `notebook.ipynb` drafting the complete progression
 * `notebooks/` folder decomposing the progression by chapter/task
-* `src/` folder for factored code
