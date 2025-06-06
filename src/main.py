@@ -4,6 +4,7 @@ from typing import Dict
 from config import ConfigManager
 from processing import TextProcessor
 from rag import RAGSystem
+from agent import AgentFactory
 
 
 def mode_selector():
@@ -122,8 +123,39 @@ def chat_rag_memory(conf: ConfigManager):
 
 def agent(conf: ConfigManager):
     """Agent mode."""
-    # Implement the logic for agent mode here
-    pass
+
+    factory = AgentFactory(conf)
+
+    print("Which agent would you like to use?")
+    print("(1) - QA Agent (Math & Wikipedia)")
+    print("(2) - Python Agent (Code execution)")
+    print("(3) - Time Agent (Current date)")
+    print("(4) - All Tools Agent (Combined capabilities)")
+
+    choice = input("Enter your choice (1-4): ").strip()
+
+    agent_types = {"1": "qa", "2": "python", "3": "time", "4": "custom"}
+
+    if choice not in agent_types:
+        print("Invalid choice. Using QA Agent as default.")
+        agent_type = "qa"
+    else:
+        agent_type = agent_types[choice]
+
+    print(f"\nUsing {agent_type.upper()} Agent. Type 'exit' to quit.\n")
+
+    debug_mode = input("Enable debug mode? (y/n): ").strip().lower() == "y"
+
+    while True:
+        query = input("\nYour question: ")
+
+        if query.lower() in ["exit", "quit"]:
+            print("Agent session ended.")
+            break
+
+        result = factory.run_agent_query(agent_type, query, debug=debug_mode)
+        print("\nAgent response:")
+        print(result["output"])
 
 
 def evaluate(conf: ConfigManager):
