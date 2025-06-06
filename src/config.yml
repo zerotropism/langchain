@@ -2,7 +2,7 @@
 
 # LLM overall
 model:
-  name: "llama3.2"
+  name: "gemma3:12b"
   temperature: 0.0
   top_k: 64
   top_p: 0.95
@@ -39,6 +39,38 @@ prompts:
     Here are the top search results: {search_results}
     User question: {user_input}
     Answer:
+  agent:
+    math: "What are the roots of x in x**2 + 2x + 4?"
+    wikipedia: >
+      Tom M. Mitchell is an American computer scientist
+      and the Founders University Professor at Carnegie Mellon University (CMU)
+      what book did he write?
+    code:
+      prompt: >
+        Sort these customers by last name and then first name 
+        and print the output: {customer_list}
+      content:
+        - first_name: Harrison
+          last_name: Chase
+        - first_name: Lang
+          last_name: Chain
+        - first_name: Dolly
+          last_name: Too
+        - first_name: Elle
+          last_name: Elem
+        - first_name: Geoff
+          last_name: Fusion
+        - first_name: Trance
+          last_name: Former
+        - first_name: Jen
+          last_name: Ayai
+    time: >
+      Returns todays date, use this for any
+      questions related to knowing todays date.
+      The input should always be an empty string,
+      and this function will always return todays
+      date - any date mathmatics should occur
+      outside this function.
 
 # Example applications
 examples:
