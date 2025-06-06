@@ -106,7 +106,7 @@ class RAGSystem:
         # Initialize services
         self.prompt_manager = PromptManager(self.config)
         self.embedding_service = EmbeddingService(self.rag_settings)
-        self.llm_service = LLMClient(self.config).infer()
+        self.llm_service = LLMClient(self.config)
         self.vector_db = self.build_index()
 
     @handle_exception
@@ -154,9 +154,10 @@ class RAGSystem:
         if self.vector_db is None:
             raise ValueError("Vector index not built. Call build_index() first.")
 
+        llm = self.llm_service.infer()
         results = self.embedding_service.similarity_search(query)
         context = "".join([doc.page_content for doc in results])
-        return self.llm_service.invoke(f"{context} Question: {query}")
+        return llm.invoke(f"{context} Question: {query}")
 
     @handle_exception
     @timing_decorator
@@ -176,9 +177,10 @@ class RAGSystem:
         if self.vector_db is None:
             raise ValueError("Vector index not built. Call build_index() first.")
 
+        llm = self.llm_service.infer()
         retriever = self.embedding_service.get_retriever()
         return RetrievalQA.from_chain_type(
-            llm=self.llm_service,
+            llm=llm,
             chain_type=chain_type,
             retriever=retriever,
             verbose=verbose,
