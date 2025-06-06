@@ -220,7 +220,8 @@ class TextProcessor:
         )
 
         print(
-            f"Vous pouvez maintenant discuter avec le modèle '{self.config.get('model', 'name')}'.\nTapez 'exit' pour quitter.\n"
+            f"You can now start chatting with the model '{self.config.get("model", "name")}'.\
+            Type 'exit' to quit.\n"
         )
 
         # Start the chat loop
