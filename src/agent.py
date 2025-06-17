@@ -1,7 +1,8 @@
 from datetime import date
 from typing import List, Optional, Any, Dict, Union
 
-from langchain.agents import load_tools, initialize_agent, AgentType, tool
+from langchain_community.agent_toolkits.load_tools import load_tools
+from langchain.agents import initialize_agent, AgentType, tool
 from langchain_experimental.utilities import PythonREPL
 from langchain_experimental.tools.python.tool import PythonREPLTool
 from langchain_experimental.agents.agent_toolkits import create_python_agent
