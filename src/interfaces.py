@@ -53,7 +53,7 @@ class IPromptManager(ABC):
         pass
 
     @abstractmethod
-    def build_chat_messages(self, user_prompt, system_prompt=None):
+    def build_chat_messages(self, system_prompt=None, user_prompt=None):
         """Build a list of chat messages."""
         pass
 
