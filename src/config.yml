@@ -71,6 +71,13 @@ prompts:
       and this function will always return todays
       date - any date mathmatics should occur
       outside this function.
+  eval:
+    pockets:
+      query: "Do the Cozy Comfort Pullover Set have side pockets?"
+      answer: "Yes"
+    collection:
+      query: "What collection is the Ultra-Lofty 850 Stretch Down Hooded Jacket from?"
+      answer: "The DownTek collection"
 
 # Example applications
 examples:
