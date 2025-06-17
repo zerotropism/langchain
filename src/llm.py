@@ -11,8 +11,8 @@ class LLMClient(ILLMClient):
         Initialize the LLM client.
 
         Args:
-            config (`IConfigManager`, optional): Configuration manager with pre-loaded
-                settings from `./config.yml` file
+            config (IConfigManager, optional): Configuration manager with pre-loaded
+                settings from ./config.yml file
         """
         from config import ConfigManager
 
@@ -37,9 +37,9 @@ class LLMClient(ILLMClient):
         This method initializes the ChatOllama instance with the specified model and temperature.
 
         Args:
-            custom_model (`str`, optional): Custom model name to use instead of the default.
-            custom_temperature (`float`, optional): Custom temperature for the model.
-            custom_token_count (`bool`, optional): If True, uses a custom token counting method.
+            custom_model (str, optional): Custom model name to use instead of the default.
+            custom_temperature (float, optional): Custom temperature for the model.
+            custom_token_count (bool, optional): If True, uses a custom token counting method.
 
         Returns:
             ChatOllama: An instance of the ChatOllama class configured with the specified parameters.
