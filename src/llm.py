@@ -1,19 +1,24 @@
 from typing import Optional, Union, List, Dict, Any
-from config import ConfigManager
+from interfaces import IConfigManager, ILLMClient
 from langchain_ollama import ChatOllama
 
 
-class LLMClient:
+class LLMClient(ILLMClient):
     """Base client for interacting with language models."""
 
-    def __init__(self, config: Optional[ConfigManager] = None):
+    def __init__(self, config: Optional[IConfigManager] = None):
         """
         Initialize the LLM client.
 
         Args:
-            config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
+            config (`IConfigManager`, optional): Configuration manager with pre-loaded
+                settings from `./config.yml` file
         """
-        model_settings = config.get("model") if config else ConfigManager().get("model")
+        from config import ConfigManager
+
+        config_manager = config or ConfigManager()
+        model_settings = config_manager.get("model")
+
         self._model = model_settings.get("name")
         self._temperature = model_settings.get("temperature")
         self._top_k = model_settings.get("top_k")
@@ -26,7 +31,7 @@ class LLMClient:
         custom_model: str = None,
         custom_temperature: float = None,
         custom_token_count: bool = False,
-    ):
+    ) -> ChatOllama:
         """Lazy-loaded chat model instance.
 
         This method initializes the ChatOllama instance with the specified model and temperature.
@@ -39,15 +44,18 @@ class LLMClient:
         Returns:
             ChatOllama: An instance of the ChatOllama class configured with the specified parameters.
         """
-        self._chat_instance = (
-            self._chat_instance
-            or ChatOllama(
-                model=custom_model or self._model,
-                temperature=custom_temperature or self._temperature,
-            )
-            if not custom_token_count
-            else CustomTokenCountLLM(model=self._model, temperature=self._temperature)
-        )
+        if not self._chat_instance:
+            if custom_token_count:
+                self._chat_instance = CustomTokenCountLLM(
+                    model=custom_model or self._model,
+                    temperature=custom_temperature or self._temperature,
+                )
+            else:
+                self._chat_instance = ChatOllama(
+                    model=custom_model or self._model,
+                    temperature=custom_temperature or self._temperature,
+                )
+
         return self._chat_instance
 
 
