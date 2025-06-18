@@ -1,7 +1,6 @@
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, Optional, Any
 from abc import ABC, abstractmethod
-from config import ConfigManager
-from llm import LLMClient
+from interfaces import IConfigManager, ILLMClient, IMemoryFactory
 from decorators import handle_exception
 
 from langchain.memory import (
@@ -22,8 +21,8 @@ class BaseMemoryManager(ABC):
         Initialize the memory manager.
 
         Args:
-            llm (`BaseLLM`): The language model to use
-            verbose (`bool`): Whether to print verbose output
+            llm (BaseLLM): The language model to use
+            verbose (bool): Whether to print verbose output
         """
         self.llm = llm
         self.verbose = verbose
@@ -82,9 +81,9 @@ class WindowMemoryManager(BaseMemoryManager):
         Initialize with a specific window size.
 
         Args:
-            llm (`BaseLLM`): The language model to use
-            window_size (`int`): Number of conversation exchanges to remember
-            verbose (`bool`): Whether to print verbose output
+            llm (BaseLLM): The language model to use
+            window_size (int): Number of conversation exchanges to remember
+            verbose (bool): Whether to print verbose output
         """
         self.window_size = window_size
         super().__init__(llm, verbose)
@@ -108,9 +107,9 @@ class TokenMemoryManager(BaseMemoryManager):
         Initialize with a token limit.
 
         Args:
-            llm (`BaseLLM`): The language model to use with token counting capability
-            max_token_limit (`int`): Maximum number of tokens to keep in memory
-            verbose (`bool`): Whether to print verbose output
+            llm (BaseLLM): The language model to use with token counting capability
+            max_token_limit (int): Maximum number of tokens to keep in memory
+            verbose (bool): Whether to print verbose output
         """
         self.max_token_limit = max_token_limit
         super().__init__(llm, verbose)
@@ -125,17 +124,17 @@ class SummaryMemoryManager(BaseMemoryManager):
     """Manager for `ConversationSummaryBufferMemory` providing:
     - a summary of the conversation
     - the last few exchanges
-    under the constraint of a default max 2000 tokens."""
+    under the constraint of a default max 100 tokens."""
 
     def __init__(self, llm: BaseLLM, max_token_limit: int = 100, verbose: bool = False):
         """
         Initialize with a token limit for summarization.
 
         Args:
-            llm (`BaseLLM`)): The language model to use for summarization,
+            llm (BaseLLM): The language model to use for summarization,
                               not customizable for now
             max_token_limit (`int`): Maximum number of tokens before summarizing
-            verbose (`bool`): Whether to print verbose output
+            verbose (bool): Whether to print verbose output
         """
         self.max_token_limit = max_token_limit
         super().__init__(llm, verbose)
@@ -146,19 +145,21 @@ class SummaryMemoryManager(BaseMemoryManager):
         )
 
 
-class MemoryFactory:
+class MemoryFactory(IMemoryFactory):
     """Factory class to create appropriate memory managers."""
 
-    def __init__(self, config: Optional[ConfigManager] = None):
+    def __init__(self, config: Optional[IConfigManager] = None):
         """
         Initialize the memory factory.
 
         Args:
-            config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
+            config (ConfigManager, optional): Pre-loaded settings from `./config.yml` file
         """
-        self.memory_settings = (
-            config.get("memory") if config else ConfigManager().get("memory")
-        )
+        from config import ConfigManager
+
+        config_manager = config or ConfigManager()
+        self.memory_settings = config_manager.get("memory")
+
         self.memory_type = self.memory_settings.get("type", "buffer").lower()
         self.window_size = self.memory_settings.get("window_size", 3)
         self.max_token_limit = self.memory_settings.get("max_token_limit", 100)
@@ -167,7 +168,7 @@ class MemoryFactory:
     @handle_exception
     def build(
         self,
-        llm: LLMClient,
+        llm: ILLMClient,
         custom_memory: Optional[str] = None,
         **kwargs,
     ) -> BaseMemoryManager:
@@ -175,8 +176,8 @@ class MemoryFactory:
         Create a memory manager of the specified type.
 
         Args:
-            llm (`LLMClient`): The language model client to use
-            custom_memory (`str`, optional): Type of memory to create
+            llm (LLMClient): The language model client to use
+            custom_memory (str, optional): Type of memory to create
                 (available: `buffer`, `window`, `token`, `summary`), defaults to `buffer`
             **kwargs: Additional arguments for specific memory types
                 (available: `window_size`, `max_token_limit`, `verbose`)
@@ -197,7 +198,7 @@ class MemoryFactory:
 
         # Create the appropriate memory manager
         if memory == "buffer":
-            return BufferMemoryManager(llm, **kwargs)
+            return BufferMemoryManager(llm, verbose)
         elif memory == "window":
             return WindowMemoryManager(llm, window_size, verbose)
         elif memory == "token":
@@ -205,4 +206,7 @@ class MemoryFactory:
         elif memory == "summary":
             return SummaryMemoryManager(llm, max_token_limit, verbose)
         else:
-            raise ValueError(f"Unknown memory type: {memory}")
+            raise ValueError(
+                f"Unknown memory type: {memory}. "
+                + "Available options: buffer, window, token, summary"
+            )
