@@ -77,7 +77,7 @@ class IOutputParser(ABC):
 
 class IMemoryFactory(ABC):
     @abstractmethod
-    def build(self, llm, memory_type, verbose=False):
+    def build(self, llm, custom_memory, **kwargs):
         """Build a memory manager of the specified type."""
         pass
 
