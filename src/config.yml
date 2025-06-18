@@ -10,7 +10,7 @@ model:
 
 # Continuous conversation memory
 memory:
-  type: "buffer" # available: 'buffer', 'window', 'token', 'summary'
+  type: "window" # available: 'buffer', 'window', 'token', 'summary'
   window_size: 3 # for 'window' memory type
   max_token_limit: 100 # for 'token' & 'summary' memory types
   verbose: False
