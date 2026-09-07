@@ -1,14 +1,11 @@
-from typing import Dict, Optional
-
-
 class ConfigManager:
     """Configuration class for managing settings."""
 
-    def __init__(self, config_data: Optional[Dict] = None):
+    def __init__(self, config_data: dict | None = None):
         """Initialize the configuration manager."""
         self._config = config_data or {}
 
-    def get(self, section: str, key: Optional[str] = None):
+    def get(self, section: str, key: str | None = None):
         """Generic method to retrieve configuration values from the config file.
         Args:
             section (str): The section of the configuration to retrieve from.
@@ -24,7 +21,7 @@ class ConfigManager:
         """Retrieve a prompt template by name."""
         return self.get("prompts", name)
 
-    def get_example(self, task: str, name: Optional[str] = None):
+    def get_example(self, task: str, name: str | None = None):
         """Retrieve an example by task and name."""
         examples = self.get("examples", task, [])
         if name:

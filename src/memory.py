@@ -1,17 +1,18 @@
-from typing import Dict, List, Optional, Any, Union
 from abc import ABC, abstractmethod
-from config import ConfigManager
-from llm import LLMClient
-from decorators import handle_exception
+from typing import Any
 
-from langchain.memory import (
+from langchain_classic.chains import ConversationChain
+from langchain_classic.memory import (
     ConversationBufferMemory,
     ConversationBufferWindowMemory,
-    ConversationTokenBufferMemory,
     ConversationSummaryBufferMemory,
+    ConversationTokenBufferMemory,
 )
-from langchain.chains import ConversationChain
-from langchain.llms.base import BaseLLM
+from langchain_core.language_models import BaseLLM
+
+from config import ConfigManager
+from decorators import handle_exception
+from llm import LLMClient
 
 
 class BaseMemoryManager(ABC):
@@ -43,7 +44,7 @@ class BaseMemoryManager(ABC):
         """Run prediction with the conversation chain."""
         return self.conversation.predict(input=input_text)
 
-    def get_memory_content(self) -> Dict[str, Any]:
+    def get_memory_content(self) -> dict[str, Any]:
         """Get the current memory variables."""
         return self.memory.load_memory_variables({})
 
@@ -116,9 +117,7 @@ class TokenMemoryManager(BaseMemoryManager):
         super().__init__(llm, verbose)
 
     def _create_memory(self) -> ConversationTokenBufferMemory:
-        return ConversationTokenBufferMemory(
-            llm=self.llm, max_token_limit=self.max_token_limit
-        )
+        return ConversationTokenBufferMemory(llm=self.llm, max_token_limit=self.max_token_limit)
 
 
 class SummaryMemoryManager(BaseMemoryManager):
@@ -141,24 +140,20 @@ class SummaryMemoryManager(BaseMemoryManager):
         super().__init__(llm, verbose)
 
     def _create_memory(self) -> ConversationSummaryBufferMemory:
-        return ConversationSummaryBufferMemory(
-            llm=self.llm, max_token_limit=self.max_token_limit
-        )
+        return ConversationSummaryBufferMemory(llm=self.llm, max_token_limit=self.max_token_limit)
 
 
 class MemoryFactory:
     """Factory class to create appropriate memory managers."""
 
-    def __init__(self, config: Optional[ConfigManager] = None):
+    def __init__(self, config: ConfigManager | None = None):
         """
         Initialize the memory factory.
 
         Args:
             config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
         """
-        self.memory_settings = (
-            config.get("memory") if config else ConfigManager().get("memory")
-        )
+        self.memory_settings = config.get("memory") if config else ConfigManager().get("memory")
         self.memory_type = self.memory_settings.get("type", "buffer").lower()
         self.window_size = self.memory_settings.get("window_size", 3)
         self.max_token_limit = self.memory_settings.get("max_token_limit", 100)
@@ -168,7 +163,7 @@ class MemoryFactory:
     def build(
         self,
         llm: LLMClient,
-        custom_memory: Optional[str] = None,
+        custom_memory: str | None = None,
         **kwargs,
     ) -> BaseMemoryManager:
         """
@@ -192,7 +187,7 @@ class MemoryFactory:
 
         # Create the appropriate LLM
         llm = llm.infer(
-            custom_token_count=(True if memory in ["token", "summary"] else False),
+            custom_token_count=memory in ["token", "summary"],
         )
 
         # Create the appropriate memory manager

@@ -1,10 +1,11 @@
-import os
+from pathlib import Path
+
 import yaml
-from typing import Dict
+
+from agent import AgentFactory
 from config import ConfigManager
 from processing import TextProcessor
 from rag import RAGSystem
-from agent import AgentFactory
 
 
 def mode_selector():
@@ -20,7 +21,8 @@ def mode_selector():
         ("chat_rag_memory", "Chat with RAG & memory capabilities model."),
         (
             "agent",
-            "Setup & converse with a specialized Agent. (available: basic math solver, wikipedia searcher, python coder or custom)",
+            "Setup & converse with a specialized Agent. (available: basic math "
+            "solver, wikipedia searcher, python coder or custom)",
         ),
         (
             "evaluate",
@@ -37,11 +39,11 @@ def mode_selector():
             return modes[choice_num - 1][0]
         else:
             raise ValueError
-    except ValueError:
-        raise ValueError("Invalid number. Please select a valid number.")
+    except ValueError as err:
+        raise ValueError("Invalid number. Please select a valid number.") from err
 
 
-def load_configurations(path: str = "src/config.yml") -> Dict:
+def load_configurations(path: str = "src/config.yml") -> dict:
     """Load configuration from a YAML file.
 
     Take a filepath string and return a dictionary with the configuration settings.
@@ -53,7 +55,7 @@ def load_configurations(path: str = "src/config.yml") -> Dict:
         Dict: A dictionary with the configuration settings
     """
     try:
-        with open(path, "r") as file:
+        with Path(path).open() as file:
             return yaml.safe_load(file)
     except Exception as e:
         print(f"Error loading configuration: {e}")
@@ -187,9 +189,7 @@ def main():
 
     # Raise an error if mode is not valid
     if not mode:
-        raise ValueError(
-            f"Mode must be specified. Available modes: {', '.join(valid_modes)}"
-        )
+        raise ValueError(f"Mode must be specified. Available modes: {', '.join(valid_modes)}")
 
     elif mode not in valid_modes:
         raise ValueError(f"Invalid mode. Available modes: {', '.join(valid_modes)}")
@@ -206,9 +206,4 @@ def main():
 
 
 if __name__ == "__main__":
-
-    # Create local directories for logs
-    if not os.path.exists("../logs"):
-        os.makedirs("../logs")
-
     main()

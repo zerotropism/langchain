@@ -15,7 +15,7 @@ agents, and evaluation.
 * Install dependencies:
 
   ```bash
-  pip install -r requirements.txt
+  uv sync --all-groups
   ```
 
 ## Definition
@@ -82,18 +82,16 @@ src/                Factored, production-style source code
   rag.py            RAG system and embedding service
   agent.py          Agent factory, tools, and runner
   decorators.py     Exception handling and timing decorators
-notebooks/          Step-by-step progression by chapter/task
-  1_parsing.ipynb   2_memory.ipynb   3_chaining.ipynb
-  4_qadocs.ipynb    5_evaluate.ipynb 6_agents.ipynb
-  notebook.ipynb    Full end-to-end draft progression
 data/               Example datasets (amazon.csv, clothing.csv)
 generated/          Generated variants of the code
 archives/           Archived configuration/code
 logs/               Runtime logs (e.g. errors.log)
 ```
 
-## Learning path
+## Roadmap
 
-The `notebooks/` folder mirrors the source modules and is meant to be followed
-in order: parsing → memory → chaining → question answering over documents (RAG)
-→ evaluation → agents.
+Use cases demonstrated in the removed notebooks, to be reimplemented in `src/`
+with LangChain 1.x APIs:
+
+- Chaining and routing (sequential chains, prompt routing)
+- LLM-as-judge evaluation (QA pair generation, answer grading)
