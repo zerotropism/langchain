@@ -1,19 +1,18 @@
-from langchain.memory import (
+from langchain_classic.memory import (
     ConversationBufferMemory,
     ConversationBufferWindowMemory,
-    ConversationTokenBufferMemory,
     ConversationSummaryBufferMemory,
+    ConversationTokenBufferMemory,
 )
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from typing import Optional
+
 from config import ConfigManager
 from decorators import handle_exception
-from typing import Optional
 from llm import LLMClient
 
 
 class MessageHistoryMemoryManager:
-    def __init__(self, config: Optional[ConfigManager] = None):
+    def __init__(self, config: ConfigManager | None = None):
         self.config = config or ConfigManager()
         self.llm_client = LLMClient(self.config)
         self.session_store = {}
@@ -64,16 +63,14 @@ class MessageHistoryMemoryManager:
 class MemoryFactory:
     """Factory class to create appropriate memory managers."""
 
-    def __init__(self, config: Optional[ConfigManager] = None):
+    def __init__(self, config: ConfigManager | None = None):
         """
         Initialize the memory factory.
 
         Args:
             config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
         """
-        self.memory_settings = (
-            config.get("memory") if config else ConfigManager().get("memory")
-        )
+        self.memory_settings = config.get("memory") if config else ConfigManager().get("memory")
         self.memory_type = self.memory_settings.get("type", "buffer").lower()
         self.window_size = self.memory_settings.get("window_size", 3)
         self.max_token_limit = self.memory_settings.get("max_token_limit", 100)
@@ -81,7 +78,7 @@ class MemoryFactory:
         self.instance = self.build(self.memory_type)
 
     @handle_exception
-    def build(self, memory_type: Optional[str] = "buffer", **kwargs):
+    def build(self, memory_type: str | None = "buffer", **kwargs):
         """
         Build the appropriate memory manager based on the specified type.
 
@@ -106,8 +103,6 @@ class MemoryFactory:
         if memory_type == "window":
             memory_kwargs["k"] = kwargs.get("window_size", self.window_size)
         if memory_type in ("token", "summary"):
-            memory_kwargs["max_token_limit"] = kwargs.get(
-                "max_token_limit", self.max_token_limit
-            )
+            memory_kwargs["max_token_limit"] = kwargs.get("max_token_limit", self.max_token_limit)
 
         return memory_class(**memory_kwargs)

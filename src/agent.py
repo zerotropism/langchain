@@ -1,14 +1,15 @@
 from datetime import date
-from typing import List, Optional, Any, Dict, Union
+from typing import Any
 
-from langchain.agents import load_tools, initialize_agent, AgentType, tool
-from langchain_experimental.utilities import PythonREPL
-from langchain_experimental.tools.python.tool import PythonREPLTool
+from langchain_classic.agents import AgentType, initialize_agent
+from langchain_community.agent_toolkits.load_tools import load_tools
+from langchain_core.tools import tool
 from langchain_experimental.agents.agent_toolkits import create_python_agent
-from langchain.schema import AgentAction, AgentFinish
+from langchain_experimental.tools.python.tool import PythonREPLTool
+
 from config import ConfigManager
-from llm import LLMClient
 from decorators import handle_exception, timing_decorator
+from llm import LLMClient
 
 
 class Tools:
@@ -39,7 +40,7 @@ class AgentRunner:
 
     @handle_exception
     @timing_decorator
-    def run(self, query: str) -> Dict[str, Any]:
+    def run(self, query: str) -> dict[str, Any]:
         """Run the agent on a query with proper error handling.
 
         Args:
@@ -67,7 +68,7 @@ class AgentRunner:
 class AgentFactory:
     """Factory class for creating different types of LangChain agents."""
 
-    def __init__(self, config: Optional[ConfigManager] = None):
+    def __init__(self, config: ConfigManager | None = None):
         """Initialize the factory with the language model configuration.
 
         Args:
@@ -112,9 +113,7 @@ class AgentFactory:
         return create_python_agent(self.llm, tool=PythonREPLTool(), verbose=verbose)
 
     @handle_exception
-    def create_custom_agent(
-        self, additional_tools: List = None, verbose: bool = True
-    ) -> Any:
+    def create_custom_agent(self, additional_tools: list = None, verbose: bool = True) -> Any:
         """Create an agent with custom tools in addition to standard ones.
 
         Args:
@@ -152,9 +151,7 @@ class AgentFactory:
 
     @handle_exception
     @timing_decorator
-    def run_agent_query(
-        self, agent_type: str, query: str, debug: bool = False
-    ) -> Dict[str, Any]:
+    def run_agent_query(self, agent_type: str, query: str, debug: bool = False) -> dict[str, Any]:
         """Run a query using a specified agent type.
 
         Args:

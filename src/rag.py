@@ -1,24 +1,26 @@
-from typing import List, Dict, Any, Optional
+from typing import Any
 
-# Global langchain imports
-from langchain.schema import Document
-from langchain.chains import RetrievalQA
-from langchain.indexes import VectorstoreIndexCreator
+from langchain_classic.chains import RetrievalQA
+from langchain_classic.indexes import VectorstoreIndexCreator
 from langchain_community.document_loaders import CSVLoader
 from langchain_community.vectorstores import DocArrayInMemorySearch
 
+# Global langchain imports
+from langchain_core.documents import Document
+from langchain_ollama import OllamaEmbeddings
+
+from config import ConfigManager
+from decorators import handle_exception, timing_decorator
+
 # Specific modules and local RAG related imports
 from llm import LLMClient
-from config import ConfigManager
 from prompting import PromptManager
-from langchain_ollama import OllamaEmbeddings
-from decorators import handle_exception, timing_decorator
 
 
 class EmbeddingService:
     """Handles document embedding and vector database operations."""
 
-    def __init__(self, embedding_settings: Dict[str, Any]):
+    def __init__(self, embedding_settings: dict[str, Any]):
         """
         Initialize the embedding service.
 
@@ -31,7 +33,7 @@ class EmbeddingService:
 
     @handle_exception
     @timing_decorator
-    def create_vector_db(self, documents: List[Document]) -> DocArrayInMemorySearch:
+    def create_vector_db(self, documents: list[Document]) -> DocArrayInMemorySearch:
         """
         Create a vector database from documents.
 
@@ -41,14 +43,12 @@ class EmbeddingService:
         Returns:
             Vector database containing document embeddings
         """
-        self.vector_db = DocArrayInMemorySearch.from_documents(
-            documents, self.embeddings
-        )
+        self.vector_db = DocArrayInMemorySearch.from_documents(documents, self.embeddings)
         return self.vector_db
 
     @handle_exception
     @timing_decorator
-    def similarity_search(self, query: str, k: int = 4) -> List[Document]:
+    def similarity_search(self, query: str, k: int = 4) -> list[Document]:
         """
         Perform similarity search on the vector database.
 
@@ -60,9 +60,7 @@ class EmbeddingService:
             List of similar documents
         """
         if self.vector_db is None:
-            raise ValueError(
-                "Vector database not created. Call create_vector_db() first."
-            )
+            raise ValueError("Vector database not created. Call create_vector_db() first.")
 
         return self.vector_db.similarity_search(query, k=k)
 
@@ -76,9 +74,7 @@ class EmbeddingService:
             Retriever object
         """
         if self.vector_db is None:
-            raise ValueError(
-                "Vector database not created. Call create_vector_db() first."
-            )
+            raise ValueError("Vector database not created. Call create_vector_db() first.")
 
         return self.vector_db.as_retriever()
 
@@ -86,7 +82,7 @@ class EmbeddingService:
 class RAGSystem:
     """Retrieval-Augmented Generation system for document QA."""
 
-    def __init__(self, config: Optional[ConfigManager] = None):
+    def __init__(self, config: ConfigManager | None = None):
         """
         Initialize the RAG system.
 
@@ -110,7 +106,7 @@ class RAGSystem:
         self.vector_db = self.build_index()
 
     @handle_exception
-    def get_documents(self, filepath: str = None) -> List[Document]:
+    def get_documents(self, filepath: str = None) -> list[Document]:
         """
         Load documents from a CSV file.
 
@@ -164,9 +160,7 @@ class RAGSystem:
 
     @handle_exception
     @timing_decorator
-    def create_qa_chain(
-        self, chain_type: str = "stuff", verbose: bool = False
-    ) -> RetrievalQA:
+    def create_qa_chain(self, chain_type: str = "stuff", verbose: bool = False) -> RetrievalQA:
         """
         Create a QA chain for more complex retrieval methods.
 
@@ -209,9 +203,7 @@ class RAGSystem:
 
     @handle_exception
     @timing_decorator
-    def query_with_chain(
-        self, query: str, chain_type: str = "stuff", verbose: bool = False
-    ) -> str:
+    def query_with_chain(self, query: str, chain_type: str = "stuff", verbose: bool = False) -> str:
         """
         Query using a specific chain type.
 

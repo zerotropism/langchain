@@ -1,12 +1,14 @@
-from typing import Optional, Union, List, Dict, Any
-from config import ConfigManager
+from typing import Any
+
 from langchain_ollama import ChatOllama
+
+from config import ConfigManager
 
 
 class LLMClient:
     """Base client for interacting with language models."""
 
-    def __init__(self, config: Optional[ConfigManager] = None):
+    def __init__(self, config: ConfigManager | None = None):
         """
         Initialize the LLM client.
 
@@ -37,7 +39,8 @@ class LLMClient:
             custom_token_count (`bool`, optional): If True, uses a custom token counting method.
 
         Returns:
-            ChatOllama: An instance of the ChatOllama class configured with the specified parameters.
+            ChatOllama: An instance of the ChatOllama class configured with the specified
+            parameters.
         """
         self._chat_instance = (
             self._chat_instance
@@ -61,7 +64,7 @@ class CustomTokenCountLLM(ChatOllama):
         # Simple word-based tokenization
         return len(text.split())
 
-    def get_num_tokens_from_messages(self, messages: List[Union[Dict, Any]]) -> int:
+    def get_num_tokens_from_messages(self, messages: list[dict | Any]) -> int:
         """Count tokens in a list of messages."""
         count = 0
         for message in messages:

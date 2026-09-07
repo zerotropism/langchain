@@ -1,0 +1,24 @@
+[project]
+name = "langchain-tour"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "docarray>=0.41.0",
+    "kagglehub>=1.0.2",
+    "langchain>=1.4.0",
+    "langchain-classic>=1.0.8",
+    "langchain-community>=0.4.2",
+    "langchain-core>=1.6.2",
+    "langchain-experimental>=0.4.2",
+    "langchain-ollama>=1.1.0",
+    "pandas>=3.0.5",
+    "pyyaml>=6.0.3",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.3.0",
+    "jupyter>=1.1.1",
+    "pytest>=9.1.1",
+    "ruff>=0.16.6",
+]

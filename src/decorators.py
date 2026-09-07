@@ -1,27 +1,31 @@
-import logging
 import functools
-import traceback
-import time
+import logging
 import sys
-from typing import Any, Callable, TypeVar, cast
+import time
+import traceback
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any, cast
 
 # Logger configuration
+LOG_DIR = Path(__file__).resolve().parent.parent / "logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
 logging.basicConfig(
     level=logging.ERROR,
-    format="%(asctime)s - %(levelname)s - %(name)s - %(filename)s - %(funcName)s - %(lineno)d - %(message)s : ",
+    format=(
+        "%(asctime)s - %(levelname)s - %(name)s - %(filename)s - "
+        "%(funcName)s - %(lineno)d - %(message)s : "
+    ),
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler("../logs/errors.log"),
+        logging.FileHandler(LOG_DIR / "errors.log"),
     ],
 )
-
 logger = logging.getLogger("langchain")
 
-# TypeVar definition for decorator typing
-F = TypeVar("F", bound=Callable[..., Any])
 
-
-def handle_exception(func: F) -> F:
+def handle_exception[F: Callable[..., Any]](func: F) -> F:
     """
     Decorator to capture and log exceptions in a comprehensive way.
 
@@ -68,7 +72,7 @@ Type:       {exception_type}
 Message:    {exception_msg}
 Arguments:  {call_args}
 Parameters: {filtered_kwargs}
-Timestamp:  {time.strftime('%Y-%m-%d %H:%M:%S')}
+Timestamp:  {time.strftime("%Y-%m-%d %H:%M:%S")}
 Stack trace:
 {stack_trace}
 ===================================
@@ -78,9 +82,7 @@ Stack trace:
             logger.error(log_message)
 
             # Inform the user that an error occurred
-            print(
-                f"[ERROR] An error occurred while executing {function_name}: {exception_msg}"
-            )
+            print(f"[ERROR] An error occurred while executing {function_name}: {exception_msg}")
             print("Check the log file for more details.")
 
             # Propagate exception to allow custom handling at a higher level
@@ -90,7 +92,7 @@ Stack trace:
 
 
 # Timing decorator for performance measurement
-def timing_decorator(func: F) -> F:
+def timing_decorator[F: Callable[..., Any]](func: F) -> F:
     """Measures and logs the execution time of a function."""
 
     @functools.wraps(func)
@@ -98,9 +100,7 @@ def timing_decorator(func: F) -> F:
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
-        logger.info(
-            f"Function {func.__name__} executed in {end_time - start_time:.4f} seconds"
-        )
+        logger.info(f"Function {func.__name__} executed in {end_time - start_time:.4f} seconds")
         return result
 
     return cast(F, wrapper)
@@ -119,7 +119,7 @@ def retry(max_attempts: int = 3, delay: float = 1.0):
         Decorator function
     """
 
-    def decorator(func: F) -> F:
+    def decorator[F: Callable[..., Any]](func: F) -> F:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             attempts = 0

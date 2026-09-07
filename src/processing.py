@@ -1,19 +1,20 @@
-from typing import Optional, Dict, Any
+from typing import Any
+
+from config import ConfigManager
+from decorators import handle_exception, timing_decorator
+from history import MessageHistoryMemoryManager
 
 # Specific modules and local imports
 from llm import LLMClient
 from memory import MemoryFactory
-from config import ConfigManager
 from parsing import OutputParser
 from prompting import PromptManager
-from history import MessageHistoryMemoryManager
-from decorators import handle_exception, timing_decorator
 
 
 class TextProcessor:
     """High-level interface for common text processing tasks."""
 
-    def __init__(self, config: Optional[ConfigManager] = None):
+    def __init__(self, config: ConfigManager | None = None):
         """
         Initialize the text processor.
 
@@ -29,7 +30,7 @@ class TextProcessor:
 
     @handle_exception
     @timing_decorator
-    def generate(self, prompt: Optional[Any] = None, **kwargs) -> str:
+    def generate(self, prompt: Any | None = None, **kwargs) -> str:
         """
         Generate text based on a prompt.
 
@@ -52,9 +53,9 @@ class TextProcessor:
     @timing_decorator
     def translate(
         self,
-        usecase: Optional[str] = None,
-        text: Optional[str] = None,
-        style: Optional[str] = None,
+        usecase: str | None = None,
+        text: str | None = None,
+        style: str | None = None,
     ) -> str:
         """
         Translate text to a different style.
@@ -88,9 +89,7 @@ class TextProcessor:
 
     @handle_exception
     @timing_decorator
-    def extract(
-        self, text: Optional[str] = None, schema_name: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def extract(self, text: str | None = None, schema_name: str | None = None) -> dict[str, Any]:
         """
         Extract structured information by following schematic instructions.
 
@@ -107,9 +106,7 @@ class TextProcessor:
             Dict[str, Any]: A dictionary with the extracted information
         """
         # Get prompt settings ie. source text, schema to use and assignment template
-        example = self.prompt_manager.get_example(
-            "extract", schema_name or "product_review"
-        )
+        example = self.prompt_manager.get_example("extract", schema_name or "product_review")
         text = text or example["source"]
         schema_name = schema_name or example["schema"]
         parser = self.output_parser.get_parser(schema_name)
@@ -125,7 +122,7 @@ class TextProcessor:
         ) or self.prompt_manager.create_template(
             """For the following text, extract the following information:
             {format_instructions}
-            
+
             text: {text}
             """
         )
@@ -143,9 +140,9 @@ class TextProcessor:
     @timing_decorator
     def chat_legacy_memory(
         self,
-        custom_llm: Optional[LLMClient] = None,
-        custom_memory: Optional[str] = None,
-        custom_system_prompt: Optional[str] = None,
+        custom_llm: LLMClient | None = None,
+        custom_memory: str | None = None,
+        custom_system_prompt: str | None = None,
         verbose: bool = False,
     ) -> None:
         """
@@ -165,25 +162,22 @@ class TextProcessor:
         llm = custom_llm or self.llm_client
         memory = (
             custom_memory.lower()
-            if custom_memory and type(custom_memory) == str
+            if custom_memory and isinstance(custom_memory, str)
             else self.memory_manager.memory_type
         )
-        system_prompt = (
-            custom_system_prompt or self.prompt_manager.prompt_templates.get("system")
-        )
+        system_prompt = custom_system_prompt or self.prompt_manager.prompt_templates.get("system")
 
         # Create the appropriate memory manager
         chatbot = self.memory_manager.build(llm, memory, verbose=verbose)
 
         # Add system prompt to memory
         chatbot.add_to_memory(
-            user_input=system_prompt
-            or self.prompt_manager.prompt_templates.get("system"),
+            user_input=system_prompt or self.prompt_manager.prompt_templates.get("system"),
             ai_output="I'll keep it professional from now on. What can I assist you with today?",
         )
 
         print(
-            f"You can now start chatting with the model '{self.config.get("model", "name")}'.\
+            f"You can now start chatting with the model '{self.config.get('model', 'name')}'.\
             Type 'exit' to quit.\n"
         )
 
@@ -203,9 +197,9 @@ class TextProcessor:
 
     def chat_legacy_history(
         self,
-        custom_llm: Optional[LLMClient] = None,
-        custom_memory: Optional[str] = None,
-        custom_system_prompt: Optional[str] = None,
+        custom_llm: LLMClient | None = None,
+        custom_memory: str | None = None,
+        custom_system_prompt: str | None = None,
         verbose: bool = False,
     ) -> None:
         """Start a legacy-mode, history-capable chat instance.
@@ -222,12 +216,10 @@ class TextProcessor:
         """
         # Set parameters for the chat instance
         session_id = "default"
-        system_prompt = (
-            custom_system_prompt or self.prompt_manager.prompt_templates.get("system")
-        )
+        system_prompt = custom_system_prompt or self.prompt_manager.prompt_templates.get("system")
 
         print(
-            f"You can now start chatting with the model '{self.config.get("model", "name")}'.\
+            f"You can now start chatting with the model '{self.config.get('model', 'name')}'.\
             Type 'exit' to quit.\n"
         )
 
@@ -247,9 +239,7 @@ class TextProcessor:
                 )
                 first_turn = False
             else:
-                messages = self.prompt_manager.build_chat_messages(
-                    user_prompt=user_input
-                )
+                messages = self.prompt_manager.build_chat_messages(user_prompt=user_input)
 
             response = self.history_manager.runnable.invoke(
                 messages,

@@ -1,5 +1,7 @@
-from typing import Dict, List, Optional, Any
-from langchain.output_parsers import ResponseSchema, StructuredOutputParser
+from typing import Any
+
+from langchain_classic.output_parsers import ResponseSchema, StructuredOutputParser
+
 from config import ConfigManager
 from decorators import handle_exception
 
@@ -7,16 +9,14 @@ from decorators import handle_exception
 class OutputParser:
     """Parser for structured outputs from language models."""
 
-    def __init__(self, config: Optional[ConfigManager] = None):
+    def __init__(self, config: ConfigManager | None = None):
         """
         Initialize the output parser.
 
         Args:
             config (`ConfigManager`, optional): Pre-loaded settings from `./config.yml` file
         """
-        self.schemas = (
-            config.get("schemas") if config else ConfigManager().get("schemas")
-        )
+        self.schemas = config.get("schemas") if config else ConfigManager().get("schemas")
         self.parsers = {}
         for schema_name, schema_definitions in self.schemas.items():
             # Each schema definition should be a list of dictionaries
@@ -25,7 +25,7 @@ class OutputParser:
     @staticmethod
     @handle_exception
     def create_json_parser(
-        schema_definitions: List[Dict[str, str]],
+        schema_definitions: list[dict[str, str]],
     ) -> StructuredOutputParser:
         """
         Create a parser for JSON-formatted outputs.
@@ -63,7 +63,7 @@ class OutputParser:
 
     @staticmethod
     @handle_exception
-    def parse_output(parser: StructuredOutputParser, output: str) -> Dict[str, Any]:
+    def parse_output(parser: StructuredOutputParser, output: str) -> dict[str, Any]:
         """
         Parse structured output from a model response.
 
@@ -79,7 +79,7 @@ class OutputParser:
         return parser.parse(output)
 
     @handle_exception
-    def get_parser(self, name: str) -> Optional[StructuredOutputParser]:
+    def get_parser(self, name: str) -> StructuredOutputParser | None:
         """
         Get a preloaded parser by name.
 

@@ -1,8 +1,10 @@
-from typing import List, Dict, Optional, Any
+from typing import Any
+
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.prompts import ChatPromptTemplate
+
 from config import ConfigManager
 from decorators import handle_exception
-from langchain.prompts import ChatPromptTemplate
-from langchain.schema import HumanMessage, SystemMessage
 
 
 class PromptManager:
@@ -40,9 +42,7 @@ class PromptManager:
         """
         if name not in self.prompt_templates:
             if self.prompt_templates:
-                print(
-                    f"Template '{name}' not found. Returning the list of available templates:"
-                )
+                print(f"Template '{name}' not found. Returning the list of available templates:")
                 print(list(self.prompt_templates.keys()))
                 return None
             print("No templates available.")
@@ -79,9 +79,7 @@ class PromptManager:
         """
         if name not in self.schema_templates:
             if self.schema_templates:
-                print(
-                    f"Schema '{name}' not found. Returning the list of available schemas:"
-                )
+                print(f"Schema '{name}' not found. Returning the list of available schemas:")
                 print(list(self.schema_templates.keys()))
                 return None
             print("No schemas available.")
@@ -89,7 +87,7 @@ class PromptManager:
         return self.schema_templates.get(name)
 
     @handle_exception
-    def formatter(self, prompt: Optional[Any], **kwargs) -> List:
+    def formatter(self, prompt: Any | None, **kwargs) -> list:
         """
         Call for the right prompt formatting methods based on the prompt type.
 
@@ -107,8 +105,7 @@ class PromptManager:
             return [HumanMessage(content=prompt)]
         elif isinstance(prompt, list):
             return [
-                p if isinstance(p, HumanMessage) else HumanMessage(content=prompt)
-                for p in prompt
+                p if isinstance(p, HumanMessage) else HumanMessage(content=prompt) for p in prompt
             ]
         elif isinstance(prompt, ChatPromptTemplate):
             return prompt.format_messages(**kwargs)
@@ -118,9 +115,7 @@ class PromptManager:
             )
 
     @handle_exception
-    def build_chat_messages(
-        self, system_prompt: str = None, user_prompt: str = None
-    ) -> list:
+    def build_chat_messages(self, system_prompt: str = None, user_prompt: str = None) -> list:
         """
         Builds a list of chat messages from string inputs.
 
